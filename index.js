@@ -1,21 +1,39 @@
 const express = require('express');
+const bodyParser = require("body-parser");
 const app = express();
+require("dotenv").config();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+const db = require("./src/models");
+const Role = db.role;
+function initial() {
+  Role.findOrCreate({
+    where: { id: 1 },
+    defaults: {
+      name: "user"
+    }
+  });
 
-app.post('/login', (req, res) => {
-    // Xác thực người dùng, kiểm tra mật khẩu, vv.
-    // Nếu xác thực thành công, tạo và trả về JWT
-    const user = {
-        id: 1,
-        username: 'exampleUser',
-    };
+  Role.findOrCreate({
+    where: { id: 2 },
+    defaults: {
+      name: "admin",
+    }
+  });
+}
 
-    const token = generateToken(user);
-
-    res.json({ token });
+db.sequelize.sync({ force: false }).then(() => {
+  initial();
 });
+// simple route
+app.get("/", (req, res) => {
+    res.json({ message: "Welcome to API." });
+  });
+  
+require('./src/routes/authRoute')(app);
 
 // Khởi chạy máy chủ
-const port = proccess.env.SERVER_PORT;
+const port = process.env.SERVER_PORT;
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
