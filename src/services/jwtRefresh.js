@@ -1,18 +1,26 @@
+// jwtRefresh.js
 const jwt = require('jsonwebtoken');
-const {secret, jwtExpiration, jwtRefreshExpiration} = require("../configs/authConfig");
-function generateToken(user) {
-    const payload = {
-        userId: user.id,
-        username: user.username,
-    };
+const config = require('../configs/authConfig');
 
-    const options = {
-        expiresIn: jwtExpiration, 
-    };
+module.exports = {
+    generateToken: (user, refreshToken) => {
+        const payload = {
+            userId: user.id,
+            username: user.username,
+        };
 
-    const secretKey = secret; 
+        const options = {
+            expiresIn: config.jwtExp,
+        };
 
-    const token = jwt.sign(payload, secretKey, options);
-    return token;
-}
-module.exports= {generateToken}
+        if (refreshToken) {
+            // Nếu có refreshToken, thêm nó vào options
+            options.jwtid = refreshToken;
+        }
+
+        const secretKey = config.secret;
+
+        const token = jwt.sign(payload, secretKey, options);
+        return token;
+    },
+};

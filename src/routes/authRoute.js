@@ -1,4 +1,6 @@
 const {generateToken }= require('../services/jwtRefresh');
+const express = require('express');
+const authController = require('../controllers/authController');
 module.exports = function (app) {
   app.use(function (req, res, next) {
     res.header(
@@ -7,17 +9,10 @@ module.exports = function (app) {
     );
     next();
   });
+  const router = express.Router();
 
-  app.post('/login', (req, res) => {
-    // Xác thực người dùng, kiểm tra mật khẩu, vv.
-    // Nếu xác thực thành công, tạo và trả về JWT
-    const user = {
-        id: req.userID,
-        username: req.userName,
-    };
+  router.post('/signup', authController.signup);
+  router.post('/login', authController.login);
 
-    const token = generateToken(user);
-
-    res.json({ token });
-});
+  app.use('/auth', router);
 };

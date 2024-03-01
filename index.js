@@ -22,7 +22,7 @@ function initial() {
   });
 }
 
-db.sequelize.sync({ force: false }).then(() => {
+db.sequelize.sync({ force: true }).then(() => {
   initial();
 });
 // simple route
