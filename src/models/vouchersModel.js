@@ -1,11 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
     try {
       const Voucher = sequelize.define("vouchers", {
-        voucher_id: {
-          type: Sequelize.INTEGER,
-          primaryKey: true,
-          allowNull: false,
-        },
         voucher_name: {
             type: Sequelize.TEXT
         },

@@ -1,12 +1,8 @@
 const config = require('../configs/dbConfig'); 
+
 module.exports = (sequelize, Sequelize) => {
   try {
     const Bill = sequelize.define("bills", {
-      bill_id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        allowNull: false,
-      },
       description: {
         type: Sequelize.TEXT
       },
@@ -16,30 +12,39 @@ module.exports = (sequelize, Sequelize) => {
       paid: {
         type: Sequelize.BOOLEAN
       },
-      expiryDate: {
-        type: Sequelize.DATE
+      expiryDays: { 
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        validate: {
+          min: 1, 
+        },
+        set(value) {
+          this.setDataValue('expiryDays', value);
+          // Tính toán và set giá trị cho expiryDate khi expiryDays thay đổi
+          const currentDate = new Date();
+          const expiryDate = new Date(currentDate.getTime() + value * 24 * 60 * 60 * 1000);
+          this.setDataValue('expiryDate', expiryDate);
+        },
       },
       paid_date: {
         type: Sequelize.DATE
       },
     });
 
-    Bill.createBill = async function (wallet) {
-      let expiredAt = new Date();
-      expiredAt.setDate(expiredAt.getDate() + 10);
-
-      // Truyền trực tiếp đối tượng Date
+    Bill.createNewBill = async function (wallet_id, Description, Total, exp) {
       let bill = await this.create({
+        total: Total,
+        description: Description,
         paid: false,
-        walletId: wallet.id,
-        expiryDate: expiredAt,
+        walletId: wallet_id,
+        expiryDays: exp, // Sử dụng trường ảo để lưu số ngày hết hạn
       });
 
       return bill;
     };
 
     Bill.verifyExpiration = (bill) => {
-      // Thay đổi cách tính toán để so sánh ngày hết hạn với ngày hiện tại
+      // Sử dụng trường ảo để so sánh ngày hết hạn với ngày hiện tại
       return bill.expiryDate.getTime() < new Date().getTime();
     };
 
