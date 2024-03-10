@@ -1,6 +1,6 @@
 const {generateToken }= require('../services/jwtRefresh');
 const express = require('express');
-const authController = require('../controllers/authController');
+const authController = require('../controllers/auth.Controllers');
 module.exports = function (app) {
   app.use(function (req, res, next) {
     res.header(
@@ -12,7 +12,7 @@ module.exports = function (app) {
   const router = express.Router();
 
   router.post('/signup', authController.signup);
-  router.post('/login', authController.login);
+  router.post('/signin', authController.signin);
 
   app.use('/auth', router);
 };

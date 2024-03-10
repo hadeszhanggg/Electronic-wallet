@@ -7,6 +7,9 @@ module.exports = {
         const payload = {
             userId: user.id,
             username: user.username,
+            email: user.email,
+            address: user.address,
+            date_of_birth: user.date_of_birth,
         };
 
         const options = {
