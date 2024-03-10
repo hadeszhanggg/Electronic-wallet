@@ -1,65 +1,64 @@
 const bcrypt = require('bcrypt');
 const db = require('../models');
 const { generateToken } = require('../services/jwtRefresh');
+const validateSignup = require('../middleware/validateSignup');
 module.exports = {
     signup: async (req, res) => {
         try {
-            const { username, password, email } = req.body;
-
-            // Kiểm tra xem người dùng đã tồn tại hay chưa
-            const existingUser = await db.user.findOne({
-                where: {
-                    username: username,
-                },
-            });
-
-            if (existingUser) {
-                return res.status(400).json({ message: 'Username already exists' });
-            }
-
+          // Sử dụng middleware kiểm tra ràng buộc
+          validateSignup(req, res, async () => {
+            const { username, password, email, address, gender, date_of_birth } = req.body;
+    
             // Mã hóa mật khẩu
             const hashedPassword = await bcrypt.hash(password, 10);
-
+    
             // Tạo người dùng mới
             const newUser = await db.user.create({
-                username: username,
-                password: hashedPassword,
-                email: email,
+              username: username,
+              password: hashedPassword,
+              email: email,
+              address: address,
+              gender: gender,
+              date_of_birth: date_of_birth,
             });
-
+    
             // Gán vai trò mặc định (role_id = 1)
             const defaultRole = await db.role.findOne({
-                where: {
-                    id: 1, // ID của vai trò mặc định
-                },
+              where: {
+                id: 1, // ID của vai trò mặc định
+              },
             });
-
+    
             await newUser.addRole(defaultRole);
-
+    
             // Tạo refreshToken
             const refreshToken = await db.refreshToken.createToken(newUser);
-
+            const createWallet = await db.wallet.createWallet(newUser);
             // Tạo và trả về JWT
             const user = {
-                id: newUser.id,
-                username: newUser.username,
+              id: newUser.id,
+              username: newUser.username,
+              email: newUser.email,
+              address: newUser.address,
+              date_of_birth: newUser.date_of_birth,          
             };
-
+    
             const token = generateToken(user);
             res.json({ token, refreshToken });
+          });
         } catch (error) {
-            console.error(error);
-
-            // Thêm kiểm tra để tránh tạo người dùng mới nếu có lỗi
-            if (error.name !== 'SequelizeDatabaseError') {
-                res.status(500).json({ message: 'Internal Server Error' });
-            } else {
-                // Xử lý các lỗi khác nếu cần
-                res.status(500).json({ message: 'Unknown Error' });
-            }
+          console.error(error);
+    
+          // Thêm kiểm tra để tránh tạo người dùng mới nếu có lỗi
+          if (error.name !== 'SequelizeDatabaseError') {
+            res.status(500).json({ message: 'Internal Server Error' });
+          } else {
+            // Xử lý các lỗi khác nếu cần
+            res.status(500).json({ message: 'Unknown Error' });
+          }
         }
-    },
-    login: async (req, res) => {
+      },
+    signin: async (req, res) => {
         try {
             const { username, password } = req.body;
 
