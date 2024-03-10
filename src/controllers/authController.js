@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const db = require('../Models');
+const db = require('../models');
 const { generateToken } = require('../services/jwtRefresh');
 module.exports = {
     signup: async (req, res) => {

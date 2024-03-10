@@ -7,6 +7,18 @@ module.exports = (sequelize, Sequelize) => {
       password: {
         type: Sequelize.TEXT
       },
+      address: {
+        type: Sequelize.TEXT
+      },
+      email: {
+        type: Sequelize.TEXT
+      },
+      gender: {
+        type: Sequelize.BOOLEAN
+      },
+      gender: {
+        type: Sequelize.BOOLEAN
+      },
     });
     return User;
   }
