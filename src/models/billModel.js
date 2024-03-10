@@ -24,7 +24,7 @@ module.exports = (sequelize, Sequelize) => {
       },
     });
 
-    Bill.createToken = async function (wallet) {
+    Bill.createBill = async function (wallet) {
       let expiredAt = new Date();
       expiredAt.setDate(expiredAt.getDate() + 10);
 

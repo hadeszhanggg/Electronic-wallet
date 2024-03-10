@@ -28,7 +28,7 @@ db.sequelize = sequelize;
 //Define of models.
 db.bill = require("./billModel.js")(sequelize,Sequelize);
 db.wallet=require("./walletModel.js")(sequelize, Sequelize);
-db.voucher=require("./vouchers.js")(sequelize,Sequelize);
+db.voucher=require("./vouchersModel.js")(sequelize,Sequelize);
 db.user = require("./userModel.js")(sequelize, Sequelize);
 db.role = require("./roleModel.js")(sequelize, Sequelize);
 db.refreshToken = require("./jwtModel.js")(sequelize, Sequelize);
@@ -47,11 +47,32 @@ db.user.belongsToMany(db.role, {
 db.refreshToken.belongsTo(db.user, {
   foreignKey: 'userId', targetKey: 'id'
 });
+//user has only one wallet
 db.wallet.belongsTo(db.user, {
-  foreignKey: 'userId', targetKey: 'id'
+  foreignKey: 'userId',
+  targetKey: 'id'
+});
+db.user.hasOne(db.wallet, {
+  foreignKey: 'userId',
+  sourceKey: 'id'
+});
+//Wallets can have many bills
+db.wallet.hasMany(db.bill, {
+  foreignKey: 'walletId',
+  sourceKey: 'id'
 });
 db.bill.belongsTo(db.wallet, {
-  foreignKey: 'walletId', targetKey: 'id'
+  foreignKey: 'walletId',
+  targetKey: 'id'
+});
+//Wallets can have many bills
+db.wallet.hasMany(db.voucher, {
+  foreignKey: 'walletId',
+  sourceKey: 'id'
+});
+db.voucher.belongsTo(db.wallet, {
+  foreignKey: 'walletId',
+  targetKey: 'id'
 });
 db.ROLES = ["user", "admin"];
 

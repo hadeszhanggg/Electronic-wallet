@@ -20,6 +20,17 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DATE
       },
     });
+    User.associate = (models) => {
+      User.belongsToMany(models.role, {
+        through: "user_roles",
+        foreignKey: "userId",
+        otherKey: "roleId"
+      });
+      User.hasOne(models.wallet, {
+        foreignKey: 'userId',
+        sourceKey: 'id'
+      });
+    };
     return User;
   }
   catch (error) {

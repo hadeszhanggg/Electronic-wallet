@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
     try {
-      const voucher = sequelize.define("vouchers", {
+      const Voucher = sequelize.define("vouchers", {
         voucher_id: {
           type: Sequelize.INTEGER,
           primaryKey: true,
@@ -15,14 +15,25 @@ module.exports = (sequelize, Sequelize) => {
         discount: {
             type: Sequelize.DOUBLE
         },
-        created_date: {
+        exp: {
           type: Sequelize.DATE
         },
         used_date: {
           type: Sequelize.DATE
         },
-      });
-      return voucher;
+      }); 
+      Voucher.createVocher = async function (wallet) {
+        let expiredAt = new Date();
+        expiredAt.setDate(expiredAt.getDate() + 10);
+        let voucher = await this.create({
+            exp: expiredAt,
+            walletId: wallet.id,
+            used_date: null, 
+        });
+
+        return voucher;
+    };
+      return Voucher;
     }
     catch (error) {
       throw(error);
