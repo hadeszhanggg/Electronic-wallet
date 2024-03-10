@@ -16,8 +16,8 @@ module.exports = (sequelize, Sequelize) => {
       gender: {
         type: Sequelize.BOOLEAN
       },
-      gender: {
-        type: Sequelize.BOOLEAN
+      date_of_birth: {
+        type: Sequelize.DATE
       },
     });
     return User;
