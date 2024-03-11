@@ -1,7 +1,9 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const app = express();
+
 const cors = require("cors");
+const cron = require('node-cron');
 require("dotenv").config();
 var corsOptions;
 
@@ -31,9 +33,9 @@ db.sequelize.sync({ force: false}).then(() => {
 });
 // simple route
 app.get("/", (req, res) => {
-    res.json({ message: "Welcome to API." });
+    res.json({ message: "Welcome to API server Electronic Wallet." });
   });
-  
+
 require('./src/routes/auth.Routes')(app);
 require('./src/routes/admin.Routes')(app);
 // Khởi chạy máy chủ

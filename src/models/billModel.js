@@ -1,5 +1,5 @@
 const config = require('../configs/dbConfig'); 
-
+const moment = require('moment-timezone');
 module.exports = (sequelize, Sequelize) => {
   try {
     const Bill = sequelize.define("bills", {
@@ -10,42 +10,31 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.DOUBLE
       },
       paid: {
-        type: Sequelize.BOOLEAN
+        type: Sequelize.BOOLEAN,
+        defaultValue:false
       },
       expiryDays: { 
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        validate: {
-          min: 1, 
-        },
-        set(value) {
-          this.setDataValue('expiryDays', value);
-          // Tính toán và set giá trị cho expiryDate khi expiryDays thay đổi
-          const currentDate = new Date();
-          const expiryDate = new Date(currentDate.getTime() + value * 24 * 60 * 60 * 1000);
-          this.setDataValue('expiryDate', expiryDate);
-        },
+        type: Sequelize.DATE,
+        allowNull: false, 
+        defaultValue: moment.tz('Asia/Ho_Chi_Minh').add(10, 'days').format('YYYY-MM-DD HH:mm:ss'),
       },
       paid_date: {
         type: Sequelize.DATE
       },
     });
-
-    Bill.createNewBill = async function (wallet_id, Description, Total, exp) {
+    //tạo một bill mới 
+    Bill.createNewBill = async function (wallet_id, Description, Total) {
       let bill = await this.create({
         total: Total,
         description: Description,
         paid: false,
-        walletId: wallet_id,
-        expiryDays: exp, // Sử dụng trường ảo để lưu số ngày hết hạn
+        walletId: wallet_id, 
       });
-
       return bill;
     };
-
+    //xác nhận ngày hết hạn không được nhỏ hơn ngày hiện tại
     Bill.verifyExpiration = (bill) => {
-      // Sử dụng trường ảo để so sánh ngày hết hạn với ngày hiện tại
-      return bill.expiryDate.getTime() < new Date().getTime();
+      return bill.expiryDays.getTime() < new Date().getTime();
     };
 
     return Bill;
