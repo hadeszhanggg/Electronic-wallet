@@ -20,9 +20,7 @@ const sequelize = new Sequelize(
     }
   }
 );
-
 const db = {};
-
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 //Define of models.
@@ -65,7 +63,7 @@ db.bill.belongsTo(db.wallet, {
   foreignKey: 'walletId',
   targetKey: 'id'
 });
-//Wallets can have many bills
+//Wallets can have many vouchers
 db.wallet.hasMany(db.voucher, {
   foreignKey: 'walletId',
   sourceKey: 'id'

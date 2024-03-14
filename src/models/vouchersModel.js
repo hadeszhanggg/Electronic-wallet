@@ -1,3 +1,4 @@
+const moment = require('moment-timezone');
 module.exports = (sequelize, Sequelize) => {
     try {
       const Voucher = sequelize.define("vouchers", {
@@ -11,18 +12,32 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.DOUBLE
         },
         exp: {
-          type: Sequelize.DATE
+          type: Sequelize.DATE,
+          allowNull: false, 
+        defaultValue: moment.tz('Asia/Ho_Chi_Minh').add(10, 'days').format('YYYY-MM-DD HH:mm:ss'),
+        },
+        used:{
+          type: Sequelize.BOOLEAN,
+          defaultValue: false
         },
         used_date: {
           type: Sequelize.DATE
         },
       }); 
-      Voucher.createVocher = async function (wallet) {
+      Voucher.createVoucher = async function (Wallet_id,Voucher_name, Description, Discount, expiry) {
         let expiredAt = new Date();
-        expiredAt.setDate(expiredAt.getDate() + 10);
+        if(!expiry){
+          expiredAt= moment.tz('Asia/Ho_Chi_Minh').add(10, 'days').format('YYYY-MM-DD HH:mm:ss');
+        }
+         else{
+          expiredAt= moment.tz('Asia/Ho_Chi_Minh').add(expiry, 'days').format('YYYY-MM-DD HH:mm:ss');
+         }
         let voucher = await this.create({
+          voucher_name: Voucher_name,
+          description: Description,
+          discount: Discount,
             exp: expiredAt,
-            walletId: wallet.id,
+            walletId: Wallet_id,
             used_date: null, 
         });
 
