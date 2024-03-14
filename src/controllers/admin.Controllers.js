@@ -13,10 +13,10 @@ exports.CreateBill = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.', detail: error.message });
     }
 };
-//kiểm tra tất cả các bill quá hạn.
+// Xác nhận thanh toán
 exports.VerifyDeposit = async(req,res)=>{
     try{
-
+        
     }catch(error)
     {
         res.status(500).json({message: 'Internal server error', detail: error.message});

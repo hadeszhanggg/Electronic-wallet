@@ -1,4 +1,9 @@
-const db = require("../models");
+// Controller để xử lý sự kiện "welcomeMessage"
+function handleWelcomeMessage(message) {
+    console.log('Received welcome message:', message);
+}
 
-const User = db.user;
-const Role = db.role;
+// Export controller để có thể sử dụng ở nơi khác trong ứng dụng
+module.exports = {
+    handleWelcomeMessage: handleWelcomeMessage
+};

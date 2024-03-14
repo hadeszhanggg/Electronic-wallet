@@ -1,5 +1,3 @@
-// routes/admin.routes.js
-const { generateToken } = require('../services/jwtRefresh');
 const authJwt = require('../middleware/authJWT');
 const { CreateBill,CreateVoucher } = require('../controllers/admin.Controllers');
 const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill');

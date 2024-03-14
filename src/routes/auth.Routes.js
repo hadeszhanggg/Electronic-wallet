@@ -1,4 +1,3 @@
-const {generateToken }= require('../services/jwtRefresh');
 const express = require('express');
 const authController = require('../controllers/auth.Controllers');
 module.exports = function (app) {

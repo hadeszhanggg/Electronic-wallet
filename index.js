@@ -1,12 +1,15 @@
-const express = require('express');
-const bodyParser = require("body-parser");
+const express=require('express') ;
+const bodyParser=require('body-parser'); 
 const app = express();
-
-const cors = require("cors");
-const cron = require('node-cron');
+const cors =require('cors'); 
 require("dotenv").config();
-var corsOptions;
-
+var corsOptions;  
+//import { createServer } from "http";
+//import { Server } from "socket.io";
+const http=require('http');
+const socketIO = require('socket.io');
+const server = http.createServer(app);
+const io = socketIO(server);
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,11 +38,22 @@ db.sequelize.sync({ force: false}).then(() => {
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to API server Electronic Wallet." });
   });
-
+io.on('connection', (socket) => {
+  console.log("has user connect to!");
+    socket.on('joinRoom', ({ roomName }) => {
+       socket.join(roomName);
+    });
+    socket.on('clientMessage', async (data) => {
+       //const fetchedData = await userService.fetchDataForUser(data.userId, data.selectedFields);
+       console.log({ data });
+      io.to('user:' + data.userId).emit('userData', fetchedData);
+    });
+ });
 require('./src/routes/auth.Routes')(app);
 require('./src/routes/admin.Routes')(app);
 // Khởi chạy máy chủ
 const port = process.env.SERVER_PORT||333;
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
+
