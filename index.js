@@ -45,7 +45,7 @@ app.get("/", (req, res) => {
 // Handle login event
 io.on('connection', (socket) => {
     console.log(`A user connected with ID: ${socket.id}`);
-  
+
     // Listen for login event
     socket.on('login', (username) => {
         console.log(`User ${username} logged in.`);
