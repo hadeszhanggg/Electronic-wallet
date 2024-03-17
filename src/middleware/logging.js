@@ -2,7 +2,7 @@ const { createLogger, format, transports } = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const moment = require('moment-timezone');
 
-const timeZone = 'Asia/HoChiMinh';
+const timeZone = 'Asia/Ho_Chi_Minh';
 
 const formatDate = (info) => {
   return `${moment().tz(timeZone).format('YYYY-MM-DD HH:mm:ss')} ${info.message}`;
