@@ -4,6 +4,7 @@ const config=require("../configs/authConfig");
 const validateSignup = require('../middleware/validateSignup');
 const RefreshToken = db.refreshToken;
 const jwt = require("jsonwebtoken");
+const logging=require('../middleware/logging');
 module.exports = {
     signup: async (req, res) => {
         try {
@@ -45,16 +46,18 @@ module.exports = {
               date_of_birth: newUser.date_of_birth,          
             };
     
-
+            logging.info(`Create new account succesfully with ${user}`);
             res.json({ message: "Signup new account succesfully!" });
           });
         } catch (error) {
           console.error(error);
-    
+          logging.error(`Create new account failed!`);
           // Thêm kiểm tra để tránh tạo người dùng mới nếu có lỗi
           if (error.name !== 'SequelizeDatabaseError') {
+            logging.error(`Internal Server Error!`);
             res.status(500).json({ message: 'Internal Server Error' });
           } else {
+            logging.error(`Internal Server Error!`);
             // Xử lý các lỗi khác nếu cần
             res.status(500).json({ message: 'Unknown Error' });
           }
