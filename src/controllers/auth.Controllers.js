@@ -4,16 +4,18 @@ const config=require("../configs/authConfig");
 const validateSignup = require('../middleware/validateSignup');
 const RefreshToken = db.refreshToken;
 const jwt = require("jsonwebtoken");
+const logging=require('../middleware/logging');
 module.exports = {
     signup: async (req, res) => {
         try {
+      
           // Sử dụng middleware kiểm tra ràng buộc
           validateSignup(req, res, async () => {
+  
             const { username, password, email, address, gender, date_of_birth } = req.body;
-    
             // Mã hóa mật khẩu
             const hashedPassword = await bcrypt.hash(password, 10);
-    
+            
             // Tạo người dùng mới
             const newUser = await db.user.create({
               username: username,
@@ -21,9 +23,8 @@ module.exports = {
               email: email,
               address: address,
               gender: gender,
-              date_of_birth: date_of_birth,
-            });
-    
+              date_of_birth: parseDate(date_of_birth),
+          });
             // Gán vai trò mặc định (role_id = 1)
             const defaultRole = await db.role.findOne({
               where: {
@@ -45,16 +46,18 @@ module.exports = {
               date_of_birth: newUser.date_of_birth,          
             };
     
-
+            logging.info(`Create new account succesfully with ${user}`);
             res.json({ message: "Signup new account succesfully!" });
           });
         } catch (error) {
           console.error(error);
-    
+          logging.error(`Create new account failed!`);
           // Thêm kiểm tra để tránh tạo người dùng mới nếu có lỗi
           if (error.name !== 'SequelizeDatabaseError') {
+            logging.error(`Internal Server Error!`);
             res.status(500).json({ message: 'Internal Server Error' });
           } else {
+            logging.error(`Internal Server Error!`);
             // Xử lý các lỗi khác nếu cần
             res.status(500).json({ message: 'Unknown Error' });
           }
@@ -148,3 +151,13 @@ exports.refreshToken = async (req, res) => {
     return res.status(500).send({ message: "error!"});
   }
 };
+function parseDate(dateString) {
+  // Phân tách chuỗi ngày tháng thành mảng
+  var parts = dateString.split('/');
+  // Lấy các thành phần của ngày tháng năm
+  var day = parseInt(parts[0], 10);
+  var month = parseInt(parts[1], 10) - 1; // Trừ đi 1 vì tháng trong JavaScript bắt đầu từ 0
+  var year = parseInt(parts[2], 10);
+  // Tạo đối tượng Date từ các thành phần trên
+  return new Date(year, month, day);
+}
