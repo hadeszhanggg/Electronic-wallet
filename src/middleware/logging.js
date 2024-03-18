@@ -26,10 +26,10 @@ const createTransport = (level, filename) => {
 const customerLogger = createLogger({
   level: 'info',
   transports: [
-    createTransport('info', 'app/logs/Server-info-%DATE%.log'),
-    createTransport('error', 'app/logs/Server-error-%DATE%.log'),
-    createTransport('debug', 'app/logs/Server-debug-%DATE%.log'),
-    createTransport('warn', 'app/logs/Server-warning-%DATE%.log')
+    createTransport('info', './src/logs/Server-info-%DATE%.log'),
+    createTransport('error', './src/logs/Server-error-%DATE%.log'),
+    createTransport('debug', './src/logs/Server-debug-%DATE%.log'),
+    createTransport('warn', './src/logs/Server-warning-%DATE%.log')
   ],
   exceptionHandlers: [
     new transports.File({

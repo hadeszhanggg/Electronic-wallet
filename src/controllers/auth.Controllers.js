@@ -66,7 +66,6 @@ module.exports = {
     signin: async (req, res) => {
         try {
             const { username, password } = req.body;
-
             // Kiểm tra xem người dùng tồn tại hay không
             const user = await db.user.findOne({
                 where: {
@@ -89,6 +88,7 @@ module.exports = {
             });
             let refreshToken = await RefreshToken.createToken(user);
             let authorities = [];
+            
             user.getRoles().then(roles => {
               for (let i = 0; i < roles.length; i++) {
                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
@@ -100,8 +100,12 @@ module.exports = {
                 roles: authorities,
                 accessToken: token,
                 refreshToken: refreshToken,
-                is_active: user.is_active
+                is_active: user.is_active,
+                address: user.address,
+                gender: user.gender,    
+                date_of_birth: user.date_of_birth    
               });
+              console.log(user.date_of_birth);
             });
         } catch (error) {
             console.error(error);
