@@ -33,7 +33,7 @@ const customerLogger = createLogger({
   ],
   exceptionHandlers: [
     new transports.File({
-      filename: `app/logs/Exception-error-${moment().tz(timeZone).format('YYYY-MM-DD')}.log`,
+      filename: `./src/logs/Exception-error-${moment().tz(timeZone).format('YYYY-MM-DD')}.log`,
       format: format.combine(
         format.timestamp(),
         format.printf(info => formatDate(info))

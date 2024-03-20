@@ -1,7 +1,6 @@
 const authJwt = require('../middleware/authJWT');
 const { CreateBill,CreateVoucher } = require('../controllers/admin.Controllers');
-const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill');
-
+const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill')
 module.exports = function (app) {
     app.use(function (req, res, next) {
         res.header(
@@ -10,7 +9,6 @@ module.exports = function (app) {
         );
         next();
     });
-
     //route tạo bill cho admin 
     app.post('/admin/bill/createBill', [authJwt.authenticateToken, checkBillInfo], async (req, res) => {
         try {
