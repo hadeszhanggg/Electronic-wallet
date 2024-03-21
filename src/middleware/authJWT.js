@@ -3,7 +3,8 @@ const db = require("../models/");
 const User = db.user;
 const jwt = require("jsonwebtoken");
 const { TokenExpiredError } = jwt;
-
+const requestIp = require('request-ip');
+const logging=require('../middleware/logging');
 const catchError = (err, res) => {
   if (err instanceof TokenExpiredError) {
     //logger.error(`Unauthorized! Access Token was expired! Implementer: IP address: [${clientIp}], userID: [${userId}], Email: [${userEmail}]. CodeLocation: [catchError] function in middleware/authJwt.js`);
@@ -75,5 +76,29 @@ const isAdmin = (req) => {
         });
     });
 };
+//Middleware to log user information and add it to the request object.
+const logUserInfo = (req, res, next) => {
+  // Get user information from the database based on the user ID in the request
+  User.findByPk(req.userId)
+    .then(async (user) => {
+      if (user) {
+        // Extract user information and add it to the request object
+        req.clientIp = requestIp.getClientIp(req); // Get client IP address
+        req.userEmail = user.email; // Extract user email
+        req.userId = user.id; // Extract user ID
 
-module.exports = { authenticateToken, isAdmin };
+        // Get user roles and add them to the request object
+        const roles = await user.getRoles();
+        req.roles = roles.map(role => role.name); // Extract user roles
+      }
+      // Move to the next middleware or route handler
+      next();
+    })
+    .catch(error => {
+      // Handle any errors that occur during user retrieval
+      logger.error(`Error retrieving user information: ${error.message}, codeLocation: [logUserInfo] function in middleware/authJwt.js`);
+      // Move to the next middleware or route handler even if an error occurs
+      next();
+    });
+};
+module.exports = { authenticateToken, isAdmin,logUserInfo };
