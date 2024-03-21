@@ -4,7 +4,21 @@ const config=require("../configs/authConfig");
 const validateSignup = require('../middleware/validateSignup');
 const RefreshToken = db.refreshToken;
 const jwt = require("jsonwebtoken");
+const requestIp = require('request-ip');
 const logging=require('../middleware/logging');
+const ipFailures = {}; 
+          // Function resets consecutiveLoginFailures variable to 0 for each IP address
+          function resetConsecutiveFailures(ip) {
+            ipFailures[ip] = 0;
+          }
+          // Perform a reset for each IP address every 60 minutes (60 * 60 * 1000 ms)
+          setInterval(() => {
+            for (const ip in ipFailures) {
+              if (ipFailures.hasOwnProperty(ip)) {
+                resetConsecutiveFailures(ip);
+              }
+            }
+          }, 60 *1000);
 module.exports = {
     signup: async (req, res) => {
         try {
@@ -63,9 +77,18 @@ module.exports = {
           }
         }
       },
+      
     signin: async (req, res) => {
         try {
+        
+            const clientIp = requestIp.getClientIp(req);
+            const consecutiveLoginFailures = ipFailures[clientIp] || 0;
             const { username, password } = req.body;
+            if (consecutiveLoginFailures >= 5) {
+              // Record a warning if the IP address is warned more than 5 times
+             logging.error( `Possible brute-force attack from IP address: [${clientIp}], codeLocation: [signin] function in auth.Controllers.js`);
+             return res.status(429).json({ message: 'Login error!' });
+           }
             // Kiểm tra xem người dùng tồn tại hay không
             const user = await db.user.findOne({
                 where: {
@@ -74,13 +97,16 @@ module.exports = {
             });
 
             if (!user) {
-                return res.status(401).json({ message: 'Invalid username or password' });
+              logging.warn( `Login error, cannot find account name or email with username: [${req.body.username}]`);
+              ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
+              return res.status(401).json({ message: 'Invalid username or password' });
             }
 
             // Kiểm tra mật khẩu
             const passwordMatch = await bcrypt.compare(password, user.password);
 
             if (!passwordMatch) {
+                ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
             const token = jwt.sign({ id: user.id }, config.secret, {
@@ -88,7 +114,8 @@ module.exports = {
             });
             let refreshToken = await RefreshToken.createToken(user);
             let authorities = [];
-            
+            // Set Consecutive Login Errors to 0 on successful login
+            resetConsecutiveFailures(clientIp);
             user.getRoles().then(roles => {
               for (let i = 0; i < roles.length; i++) {
                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
@@ -105,10 +132,10 @@ module.exports = {
                 gender: user.gender,    
                 date_of_birth: user.date_of_birth    
               });
-              console.log(user.date_of_birth);
+              logging.info( `Successfully accessed by user ID: [${user.id}]with email: [${user.email}], IP address: [${clientIp}]`);
             });
         } catch (error) {
-            console.error(error);
+          logging.error(`Login failed because this account was disabled with user ID: [${user.id}], input username: [${req.body.username}], input email: [${req.body.email}], password: [${req.body.password}], Invalid password, codeLocation: [signin] function in controllers/auth.controllers.js `)
             res.status(500).json({ message: 'Internal Server Error' });
         }
     },

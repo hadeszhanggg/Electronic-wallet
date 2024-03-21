@@ -1,5 +1,6 @@
 // controllers/bill.controllers.js
 const { bill,voucher } = require('../models');
+const logging = require('../middleware/logging');
 //hàm tạo một bill mới
 exports.CreateBill = async (req, res) => {
     try {
@@ -7,9 +8,10 @@ exports.CreateBill = async (req, res) => {
         const { walletInstance } = req;
 
         const newBill = await bill.createNewBill(walletInstance.id, description, total);
-
+        logging.info(`Create new bill succefully by admin ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
         return res.status(201).json(newBill);
     } catch (error) {
+        logging.error(`Create new bill failed by admin ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
         res.status(500).json({ message: 'Internal server error.', detail: error.message });
     }
 };
@@ -19,6 +21,7 @@ exports.VerifyDeposit = async(req,res)=>{
         
     }catch(error)
     {
+        logging.error(`Verify Deposit failed by admin ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} from wallet: id: ${req.wallet_id}`);
         res.status(500).json({message: 'Internal server error', detail: error.message});
     }
 }
@@ -28,8 +31,10 @@ exports.CreateVoucher = async (req, res) => {
         const { voucher_name, description,discount,expiry } = req.body;
         const { walletInstance } = req;
         const newVoucher = await voucher.createVoucher(walletInstance.id,voucher_name,description,discount,expiry);
+        logging.info(`Create new voucher succefully by admin ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
         return res.status(201).json(newVoucher);
     } catch (error) {
+        logging.error(`Create new voucher failed by admin ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
         res.status(500).json({ message: 'Internal server error.', detail: error.message });
     }
 };

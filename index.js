@@ -32,11 +32,9 @@ function initial() {
         }
     });
 }
-
 db.sequelize.sync({ force: false }).then(() => {
     initial();
 });
-
 // simple route
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to API server Electronic Wallet." });
@@ -45,26 +43,13 @@ app.get("/", (req, res) => {
 // Handle login event
 io.on('connection', (socket) => {
     console.log(`A user connected with ID: ${socket.id}`);
-
-    // Listen for login event
-    socket.on('login', (username) => {
-        console.log(`User ${username} logged in.`);
-        // You can do further authentication/validation here
-        // and emit response back to client accordingly
-        socket.emit('loginResponse', `Welcome, ${username}!`);
-    });
-
-    // Listen for chat message event
-    socket.on('chat message', (message) => {
-        console.log(`Received message: ${message}`);
-        // Broadcast the message to all connected clients except sender
-        socket.broadcast.emit('chat message', message);
-    });
+    socket.on('joinRoom', ( roomName ) => {
+        socket.join(roomName);
+        socket.emit('Welcome', "Welcome to Electronic-wallet API Server!");
+     });
 });
-
 require('./src/routes/auth.Routes')(app);
 require('./src/routes/admin.Routes')(app);
-
 // Khởi chạy máy chủ
 const port = process.env.SERVER_PORT || 333;
 server.listen(port, () => {
