@@ -50,4 +50,13 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+    app.post('/users/transferMoney', authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
+        try {
+            await controllers.transferMoney(req,res);
+            logging.info(`transfer money from ${req.userId} to ${req.body.recipientUsernameOrEmail} successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+        } catch (error) {
+            logging.error(`transfer money from ${req.userId} to ${req.body.recipientUsernameOrEmail}. from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    });
 };

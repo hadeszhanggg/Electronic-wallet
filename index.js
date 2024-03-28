@@ -16,7 +16,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const db = require("./src/models");
 const Role = db.role;
-
 function initial() {
     Role.findOrCreate({
         where: { id: 1 },
@@ -31,6 +30,7 @@ function initial() {
             name: "admin",
         }
     });
+    
 }
 db.sequelize.sync({ force: false }).then(() => {
     initial();

@@ -8,7 +8,6 @@ module.exports = (sequelize, Sequelize) => {
               type: Sequelize.DOUBLE
           },
       });
-
       Wallet.createWallet = async function (user) {
           let wallet = await this.create({
               userId: user.id,

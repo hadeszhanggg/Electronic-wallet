@@ -83,7 +83,10 @@ module.exports = {
         
             const clientIp = requestIp.getClientIp(req);
             const consecutiveLoginFailures = ipFailures[clientIp] || 0;
+            if(!req.body.username||!req.body.password)
+              return res.status(400).json({message: 'Username or password can not empty'})
             const { username, password } = req.body;
+
             if (consecutiveLoginFailures >= 5) {
               // Record a warning if the IP address is warned more than 5 times
              logging.error( `Possible brute-force attack from IP address: [${clientIp}], codeLocation: [signin] function in auth.Controllers.js`);
@@ -101,7 +104,7 @@ module.exports = {
               ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
               return res.status(401).json({ message: 'Invalid username or password' });
             }
-
+          
             // Kiểm tra mật khẩu
             const passwordMatch = await bcrypt.compare(password, user.password);
 
