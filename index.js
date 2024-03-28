@@ -16,6 +16,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const db = require("./src/models");
 const Role = db.role;
+const TranType =db.transactionType;
 function initial() {
     Role.findOrCreate({
         where: { id: 1 },
@@ -30,7 +31,24 @@ function initial() {
             name: "admin",
         }
     });
-    
+   TranType.findOrCreate({
+    where: { id: 1 },
+        defaults: {
+            name: "Deposit",
+        }
+   });
+   TranType.findOrCreate({
+    where: { id: 2 },
+        defaults: {
+            name: "Transfer",
+        }
+   })
+   TranType.findOrCreate({
+    where: { id: 3 },
+        defaults: {
+            name: "Pay",
+        }
+   })
 }
 db.sequelize.sync({ force: false }).then(() => {
     initial();

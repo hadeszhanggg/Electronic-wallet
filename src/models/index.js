@@ -30,6 +30,7 @@ db.voucher=require("./vouchersModel.js")(sequelize,Sequelize);
 db.user = require("./userModel.js")(sequelize, Sequelize);
 db.role = require("./roleModel.js")(sequelize, Sequelize);
 db.refreshToken = require("./jwtModel.js")(sequelize, Sequelize);
+db.transactionType = require("./transactionTypeModel.js")(sequelize, Sequelize);
 db.transactionHistory = require("./transactionHistoryModel.js")(sequelize, Sequelize);
 //Define relationships between tables.
 db.role.belongsToMany(db.user, {
@@ -72,13 +73,11 @@ db.voucher.belongsTo(db.wallet, {
   foreignKey: 'walletId',
   targetKey: 'id'
 });
-db.wallet.hasMany(db.transactionHistory, {
+db.transactionType.hasMany(db.transactionHistory, {
+   foreignKey: 'tranTypeId',
+  });
+db.wallet.hasMany(db.transactionHistory,{
   foreignKey: 'walletId',
-  sourceKey: 'id'
-});
-db.transactionHistory.belongsTo(db.wallet, {
-  foreignKey: 'walletId',
-  targetKey: 'id'
 });
 db.ROLES = ["user", "admin"];
 
