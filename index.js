@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const db = require("./src/models");
 const Role = db.role;
-
+const TranType =db.transactionType;
 function initial() {
     Role.findOrCreate({
         where: { id: 1 },
@@ -31,6 +31,24 @@ function initial() {
             name: "admin",
         }
     });
+   TranType.findOrCreate({
+    where: { id: 1 },
+        defaults: {
+            name: "Deposit",
+        }
+   });
+   TranType.findOrCreate({
+    where: { id: 2 },
+        defaults: {
+            name: "Transfer",
+        }
+   })
+   TranType.findOrCreate({
+    where: { id: 3 },
+        defaults: {
+            name: "Pay",
+        }
+   })
 }
 db.sequelize.sync({ force: false }).then(() => {
     initial();
@@ -50,6 +68,7 @@ io.on('connection', (socket) => {
 });
 require('./src/routes/auth.Routes')(app);
 require('./src/routes/admin.Routes')(app);
+require('./src/routes/user.Routes')(app);
 // Khởi chạy máy chủ
 const port = process.env.SERVER_PORT || 333;
 server.listen(port, () => {
