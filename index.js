@@ -50,6 +50,7 @@ io.on('connection', (socket) => {
 });
 require('./src/routes/auth.Routes')(app);
 require('./src/routes/admin.Routes')(app);
+require('./src/routes/user.Routes')(app);
 // Khởi chạy máy chủ
 const port = process.env.SERVER_PORT || 333;
 server.listen(port, () => {
