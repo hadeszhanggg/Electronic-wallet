@@ -14,14 +14,14 @@ module.exports = (sequelize, Sequelize) => {
     RefreshToken.createToken = async function (user) {
         let expiredAt = new Date();
         expiredAt.setSeconds(expiredAt.getSeconds() + config.jwtRefreshExp);
-
+       
         // Sử dụng kiểu dữ liệu Sequelize.DATE để tránh lỗi "Invalid date"
         let refreshToken = await this.create({
             token: uuidv4(),
             userId: user.id,
-            expiryDate: expiredAt.getTime(), // Truyền trực tiếp đối tượng Date
+            expiryDate: expiredAt.getTime(), 
         });
-
+        
         return refreshToken.token;
     };
 
