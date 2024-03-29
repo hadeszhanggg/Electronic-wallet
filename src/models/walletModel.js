@@ -2,12 +2,10 @@ module.exports = (sequelize, Sequelize) => {
   try {
       const Wallet = sequelize.define("Wallets", {
           prestige_score: {
-            allowNull: false,
               type: Sequelize.INTEGER,
               default: 0
           },
           account_balance: {
-                allowNull: false,
               type: Sequelize.DOUBLE,
               default: 0
           },
@@ -17,13 +15,9 @@ module.exports = (sequelize, Sequelize) => {
               userId: user.id,
               prestige_score: 100
           });
-
           return wallet;
       };
-      Wallet.depositMoney=async function(amount)
-      {
-        this.account_balance+=amount;
-      }
+  
       return Wallet;
   } catch (error) {
       throw error;

@@ -8,18 +8,17 @@ const validateSignup = async (req, res, next) => {
   }
 
   // Kiểm tra độ khó của mật khẩu (độ dài ít nhất 6 ký tự, có ít nhất một chữ hoa, một chữ thường, một số)
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&.,;]{6,}$/;
+  /*const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&.,;]{6,}$/;
 
   if (!passwordRegex.test(password)) {
     return res.status(400).json({ message: 'Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number' });
   }
-
+*/
   // Kiểm tra định dạng email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ message: 'Invalid email format' });
   }
-
 
 
   try {
