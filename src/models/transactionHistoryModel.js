@@ -6,11 +6,19 @@ module.exports = (sequelize, Sequelize) => {
   const TransactionHistory = sequelize.define("transaction_history", {
     content: {
       allowNull: false,
-      type: Sequelize.TEXT // Nội dung giao dịch
+      type: Sequelize.TEXT 
     },
     amount: {
       allowNull: false,
       type: Sequelize.DOUBLE 
+    },
+    latitude: {
+      allowNull: true,
+      type: Sequelize.TEXT 
+    },
+    longitude: {
+      allowNull: true,
+      type: Sequelize.TEXT 
     },
     date: {
       allowNull: false,

@@ -42,17 +42,14 @@ module.exports = (sequelize, Sequelize) => {
         sourceKey: 'id'
       });
     };
-  
     // Kiểm tra role 'user' mới sở hữu ví
     User.hasRole = async function (userId, roleName) {
       const user = await this.findByPk(userId, {
         include: [{ model: models.role, through: "user" }],
       });
-  
       if (!user || !user.roles) {
         return false;
       }
-  
       return user.roles.some((role) => role.name === roleName);
     };
     return User;
