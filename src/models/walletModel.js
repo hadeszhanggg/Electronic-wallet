@@ -13,7 +13,8 @@ module.exports = (sequelize, Sequelize) => {
       Wallet.createWallet = async function (user) {
           let wallet = await this.create({
               userId: user.id,
-              prestige_score: 100
+              prestige_score: 100,
+              account_balance: 0
           });
           return wallet;
       };

@@ -22,10 +22,8 @@ const ipFailures = {};
 module.exports = {
     signup: async (req, res) => {
         try {
-      
           // Sử dụng middleware kiểm tra ràng buộc
           validateSignup(req, res, async () => {
-  
             const { username, password, email, address, gender, date_of_birth } = req.body;
             // Mã hóa mật khẩu
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -92,22 +90,25 @@ module.exports = {
              logging.error( `Possible brute-force attack from IP address: [${clientIp}], codeLocation: [signin] function in auth.Controllers.js`);
              return res.status(429).json({ message: 'Login error!' });
            }
-            // Kiểm tra xem người dùng tồn tại hay không
-            const user = await db.user.findOne({
+             // Kiểm tra xem người dùng tồn tại hay không
+             const user = await db.user.findOne({
+              where: {
+                  username: username,
+              },
+              });
+              const wallet = await db.wallet.findOne({
                 where: {
-                    username: username,
-                },
-            });
-
+                    userId: user.id,
+                }, 
+              });
+        
             if (!user) {
               logging.warn( `Login error, cannot find account name or email with username: [${req.body.username}]`);
               ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
               return res.status(401).json({ message: 'Invalid username or password' });
             }
-          
             // Kiểm tra mật khẩu
             const passwordMatch = await bcrypt.compare(password, user.password);
-
             if (!passwordMatch) {
                 ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
                 return res.status(401).json({ message: 'Invalid username or password' });
@@ -133,7 +134,10 @@ module.exports = {
                 is_active: user.is_active,
                 address: user.address,
                 gender: user.gender,    
-                date_of_birth: user.date_of_birth    
+                date_of_birth: user.date_of_birth,
+                wallet_id: wallet.id,
+                prestige_score: wallet.prestige_score,
+                account_balance: wallet.account_balance,
               });
               logging.info( `Successfully accessed by user ID: [${user.id}]with email: [${user.email}], IP address: [${clientIp}]`);
             });
