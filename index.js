@@ -63,6 +63,7 @@ io.on('connection', (socket) => {
     console.log(`A user connected with ID: ${socket.id}`);
     socket.on('joinRoom', ( roomName ) => {
         socket.join(roomName);
+        console.log('Has user connect to chat with UserID: '+roomName);
         socket.emit('Welcome', "Welcome to Electronic-wallet API Server!");
      });
 });
