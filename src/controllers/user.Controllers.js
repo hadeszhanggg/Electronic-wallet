@@ -172,3 +172,26 @@ exports.transferMoney = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
+exports.getWallet = async (req, res) => {
+    try {; 
+        const userId=req.userId;
+        // Tìm ví dựa trên userID
+        const wallet = await db.wallet.findOne({
+            where: {
+                userId: userId,
+            }, 
+          });
+        
+        if (!wallet) {
+            return res.status(404).send({ message: "User wallet not found" });
+        }
+        res.status(200).send({
+            wallet_id: wallet.id,
+            prestige_score: wallet.prestige_score,
+            account_balance: wallet.account_balance,
+          });
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
