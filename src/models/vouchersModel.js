@@ -8,6 +8,9 @@ module.exports = (sequelize, Sequelize) => {
         description: {
             type: Sequelize.TEXT
         },
+        type: {
+          type: Sequelize.TEXT
+      },
         discount: {
             type: Sequelize.DOUBLE
         },
@@ -24,7 +27,7 @@ module.exports = (sequelize, Sequelize) => {
           type: Sequelize.DATE
         },
       }); 
-      Voucher.createVoucher = async function (Wallet_id,Voucher_name, Description, Discount, expiry) {
+      Voucher.createVoucher = async function (Wallet_id,type, Voucher_name, Description, Discount, expiry) {
         let expiredAt = new Date();
         if(!expiry){
           expiredAt= moment.tz('Asia/Ho_Chi_Minh').add(10, 'days').format('YYYY-MM-DD HH:mm:ss');
@@ -34,6 +37,7 @@ module.exports = (sequelize, Sequelize) => {
          }
         let voucher = await this.create({
           voucher_name: Voucher_name,
+          type:type,
           description: Description,
           discount: Discount,
             exp: expiredAt,

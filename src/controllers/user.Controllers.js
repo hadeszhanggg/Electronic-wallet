@@ -42,7 +42,7 @@ exports.getAllVouchers = async (req, res) => {
      // const vouchers = await db.voucher.findAll({ where: { walletId: walletId } });
       const vouchers = await db.voucher.findAll({ 
         where: { walletId: walletId },
-        attributes: ['id', 'voucher_name', 'description', 'discount', 'exp', 'used','used_date']
+        attributes: ['id', 'voucher_name', 'type','description', 'discount', 'exp', 'used','used_date']
     });
       return res.status(200).json(vouchers);
     } catch (error) {

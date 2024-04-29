@@ -50,7 +50,7 @@ function initial() {
         }
    })
 }
-db.sequelize.sync({ force: true }).then(() => {
+db.sequelize.sync({ force: false }).then(() => {
     initial();
 });
 // simple route
