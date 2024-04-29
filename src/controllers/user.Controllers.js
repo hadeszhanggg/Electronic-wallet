@@ -20,7 +20,7 @@ exports.getAllBills = async (req, res) => {
       // Lấy tất cả bills thuộc ví (walletId)
       const bills = await db.bill.findAll({ 
         where: { walletId: walletId },
-        attributes: ['id', 'description', 'total', 'paid', 'expiryDays', 'paid_date']
+        attributes: ['id', 'description', 'total','type', 'paid', 'expiryDays', 'paid_date']
     });
       return res.status(200).json(bills);
     } catch (error) {
@@ -62,7 +62,7 @@ exports.getUnpaidBills = async (req, res) => {
         // Lấy tất cả các hóa đơn chưa thanh toán thuộc ví (walletId)
         const unpaidBills = await db.bill.findAll({
             where: { walletId: walletId, paid: false },
-            attributes: ['id', 'description', 'total', 'expiryDays', 'paid_date']
+            attributes: ['id', 'description','type','total', 'expiryDays', 'paid_date']
         });
         return res.status(200).json(unpaidBills);
     } catch (error) {

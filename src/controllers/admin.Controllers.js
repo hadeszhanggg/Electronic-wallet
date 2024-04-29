@@ -4,10 +4,10 @@ const logging = require('../middleware/logging');
 //hàm tạo một bill mới
 exports.CreateBill = async (req, res) => {
     try {
-        const { description, total } = req.body;
+        const { description, type, total } = req.body;
         const { walletInstance } = req;
 
-        const newBill = await bill.createNewBill(walletInstance.id, description, total);
+        const newBill = await bill.createNewBill(walletInstance.id, type,description, total);
         logging.info(`Create new bill succefully by admin ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
         return res.status(201).json(newBill);
     } catch (error) {

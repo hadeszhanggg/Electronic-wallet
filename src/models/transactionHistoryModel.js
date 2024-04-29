@@ -6,7 +6,7 @@ module.exports = (sequelize, Sequelize) => {
   const TransactionHistory = sequelize.define("transaction_history", {
     content: {
       allowNull: false,
-      type: Sequelize.TEXT 
+      type: Sequelize.TEXT  
     },
     amount: {
       allowNull: false,
