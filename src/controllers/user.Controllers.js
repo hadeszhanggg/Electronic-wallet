@@ -20,7 +20,7 @@ exports.getAllBills = async (req, res) => {
       // Lấy tất cả bills thuộc ví (walletId)
       const bills = await db.bill.findAll({ 
         where: { walletId: walletId },
-        attributes: ['id', 'description', 'total', 'paid', 'expiryDays', 'paid_date']
+        attributes: ['id', 'description', 'total','type', 'paid', 'expiryDays', 'paid_date']
     });
       return res.status(200).json(bills);
     } catch (error) {
@@ -42,7 +42,7 @@ exports.getAllVouchers = async (req, res) => {
      // const vouchers = await db.voucher.findAll({ where: { walletId: walletId } });
       const vouchers = await db.voucher.findAll({ 
         where: { walletId: walletId },
-        attributes: ['id', 'voucher_name', 'description', 'discount', 'exp', 'used','used_date']
+        attributes: ['id', 'voucher_name', 'type','description', 'discount', 'exp', 'used','used_date']
     });
       return res.status(200).json(vouchers);
     } catch (error) {
@@ -62,7 +62,7 @@ exports.getUnpaidBills = async (req, res) => {
         // Lấy tất cả các hóa đơn chưa thanh toán thuộc ví (walletId)
         const unpaidBills = await db.bill.findAll({
             where: { walletId: walletId, paid: false },
-            attributes: ['id', 'description', 'total', 'expiryDays', 'paid_date']
+            attributes: ['id', 'description','type','total', 'expiryDays', 'paid_date']
         });
         return res.status(200).json(unpaidBills);
     } catch (error) {
@@ -167,6 +167,29 @@ exports.transferMoney = async (req, res) => {
         const transactionContent = content + ` Email user recipient is ${recipientUsernameOrEmail}`;
         const newTransactionHistory = await db.transactionHistory.createTransactionHistory(senderWallet.id, 2, transactionContent, transferAmount);
         return res.status(200).send(newTransactionHistory);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+exports.getWallet = async (req, res) => {
+    try {; 
+        const userId=req.userId;
+        // Tìm ví dựa trên userID
+        const wallet = await db.wallet.findOne({
+            where: {
+                userId: userId,
+            }, 
+          });
+        
+        if (!wallet) {
+            return res.status(404).send({ message: "User wallet not found" });
+        }
+        res.status(200).send({
+            wallet_id: wallet.id,
+            prestige_score: wallet.prestige_score,
+            account_balance: wallet.account_balance,
+          });
     } catch (error) {
         console.error("Error:", error);
         return res.status(500).send({ message: "Internal Server Error" });

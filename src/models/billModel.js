@@ -9,6 +9,10 @@ module.exports = (sequelize, Sequelize) => {
       total: {
         type: Sequelize.DOUBLE
       },
+      type: {
+        allowNull: false,
+        type: Sequelize.TEXT 
+      },
       paid: {
         type: Sequelize.BOOLEAN,
         defaultValue:false
@@ -23,9 +27,10 @@ module.exports = (sequelize, Sequelize) => {
       },
     });
     //tạo một bill mới 
-    Bill.createNewBill = async function (wallet_id, Description, Total) {
+    Bill.createNewBill = async function (wallet_id,Type, Description, Total) {
       let bill = await this.create({
         total: Total,
+        type: Type,
         description: Description,
         paid: false,
         walletId: wallet_id, 
