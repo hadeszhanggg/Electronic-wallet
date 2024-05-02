@@ -6,6 +6,7 @@ require("dotenv").config();
 const http = require('http');
 const { Server } = require('socket.io');
 const server = http.createServer(app);
+const {scheduleCheckAndUpdate}=require("./src/middleware/scheduleFunction");
 const io = new Server(server, {
     cors: {
         origin: '*'
@@ -50,8 +51,9 @@ function initial() {
         }
    })
 }
-db.sequelize.sync({ force: false }).then(() => {
+db.sequelize.sync({ force: false}).then(() => {
     initial();
+    scheduleCheckAndUpdate();
 });
 // simple route
 app.get("/", (req, res) => {

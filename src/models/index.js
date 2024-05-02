@@ -32,6 +32,7 @@ db.role = require("./roleModel.js")(sequelize, Sequelize);
 db.refreshToken = require("./jwtModel.js")(sequelize, Sequelize);
 db.transactionType = require("./transactionTypeModel.js")(sequelize, Sequelize);
 db.transactionHistory = require("./transactionHistoryModel.js")(sequelize, Sequelize);
+db.passbook =require("./passbookModel.js")(sequelize,Sequelize);
 //Define relationships between tables.
 db.role.belongsToMany(db.user, {
   through: "user_roles",
@@ -79,6 +80,32 @@ db.transactionType.hasMany(db.transactionHistory, {
 db.wallet.hasMany(db.transactionHistory,{
   foreignKey: 'walletId',
 });
+//Wallets has many passbook and passbook has many wallet 
+db.wallets_passbooks = sequelize.define('wallets_passbooks', {
+  expire: {
+    type: Sequelize.DATE,
+    allowNull: false
+  },
+  amount_deposit: {
+    type: Sequelize.DOUBLE, 
+    allowNull: false
+  }
+}, {
+  indexes: [
+    {
+      unique: true,
+      fields: ['walletId', 'passbookId']
+    }
+  ]
+});
+
+// Wallet có nhiều Passbook và ngược lại
+db.wallet.hasMany(db.wallets_passbooks, { foreignKey: 'walletId' });
+db.wallets_passbooks.belongsTo(db.wallet, { foreignKey: 'walletId' });
+
+db.passbook.hasMany(db.wallets_passbooks, { foreignKey: 'passbookId' });
+db.wallets_passbooks.belongsTo(db.passbook, { foreignKey: 'passbookId' });
+db.wallets_passbooks.removeAttribute('id');
 db.ROLES = ["user", "admin"];
 
 module.exports = db;
