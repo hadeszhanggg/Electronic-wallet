@@ -195,3 +195,49 @@ exports.getWallet = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
+/// API thêm một giao dịch sổ tiết kiệm
+exports.createPassbookRegistration = async (req, res) => {
+    try {
+        const { amount_deposit, wallet_id, passbookId } = req.body;
+
+        // Kiểm tra nếu walletId hoặc passbookId không được cung cấp
+        if (!wallet_id || !passbookId || !amount_deposit) {
+            return res.status(400).json({ message: "Wallet ID and Passbook ID or amount_deposit are required" });
+        }
+
+        // Kiểm tra nếu walletId hoặc passbookId không hợp lệ
+        const wallet = await db.wallet.findByPk(wallet_id);
+        const passbook = await db.passbook.findByPk(passbookId);
+        if (!wallet || !passbook) {
+            return res.status(404).json({ message: "Wallet or Passbook not found" });
+        }
+
+        // Kiểm tra xem có đủ tiền trong tài khoản không
+        if (wallet.account_balance < amount_deposit) {
+            return res.status(400).json({ message: "Insufficient balance in the wallet" });
+        }
+
+
+        // Lấy thông tin về kỳ hạn (period) của passbook
+        const period = passbook.period;
+
+        // Tính toán ngày hết hạn (expire) cho đăng ký sổ tiết kiệm
+        const currentDateTime = moment().tz('Asia/Ho_Chi_Minh');
+        const expireDateTime = currentDateTime.add(period, 'months');
+
+        // Tạo một bản ghi mới trong bảng wallets_passbooks
+        const newPassbookRegistration = await db.wallets_passbooks.create({
+            walletId: wallet_id,
+            passbookId: passbookId,
+            amount_deposit: amount_deposit,
+            expire: expireDateTime.format('YYYY-MM-DD HH:mm:ss')
+        });
+        // Trừ số tiền amount_deposit từ account_balance
+        const updatedBalance = wallet.account_balance - amount_deposit;
+        await wallet.update({ account_balance: updatedBalance });
+        return res.status(201).json(newPassbookRegistration);
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};

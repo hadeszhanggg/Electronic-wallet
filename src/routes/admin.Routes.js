@@ -1,5 +1,5 @@
 const authJwt = require('../middleware/authJWT');
-const { CreateBill,CreateVoucher } = require('../controllers/admin.Controllers');
+const { CreateBill,CreateVoucher, CreatePassbook } = require('../controllers/admin.Controllers');
 const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill')
 const logging=require('../middleware/logging');
 module.exports = function (app) {
@@ -91,5 +91,18 @@ module.exports = function (app) {
             console.error(error);
             return res.status(500).json({ message: 'Internal Server Error' });
         }
-    });    
+    });   
+    app.post('/admin/Passbook/createPassbook',authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
+        try {
+            if (await authJwt.isAdmin(req)) {
+                await CreatePassbook(req, res);
+                return;
+            } else 
+            logging.error(`Use api create bill failed because 'access denined', Client IP: [${req.clientIp}], from routes: /admin/bill/createBill`);
+                res.status(403).json({ message: "Access denied!" });       
+        } catch (error) {
+            logging.error(`Use api create bill failed because 'Server error', Client IP: [${req.clientIp}], from routes: /admin/bill/createBill`);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    }); 
 };
