@@ -77,4 +77,13 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+    app.get('/users/getAllPassbook', async (req, res) => {
+        try {
+            await controllers.getAllPassbook(req,res);
+            logging.info(`get all passbook successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+        } catch (error) {
+            logging.error(`get all passbook failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    });
 };

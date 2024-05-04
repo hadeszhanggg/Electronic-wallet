@@ -241,3 +241,15 @@ exports.createPassbookRegistration = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+//Get all passbook
+exports.getAllPassbook = async (req, res) => {
+    try {
+        const passbooks = await db.passbook.findAll({
+            attributes: ['id', 'passbook_name', 'description', 'interest_rate', 'period']
+        });
+        return res.status(200).json(passbooks);
+    } catch (error) {
+       // logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
