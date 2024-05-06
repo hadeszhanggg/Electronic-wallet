@@ -105,7 +105,6 @@ db.wallets_passbooks.belongsTo(db.wallet, { foreignKey: 'walletId' });
 
 db.passbook.hasMany(db.wallets_passbooks, { foreignKey: 'passbookId' });
 db.wallets_passbooks.belongsTo(db.passbook, { foreignKey: 'passbookId' });
-db.wallets_passbooks.removeAttribute('id');
 db.ROLES = ["user", "admin"];
 
 module.exports = db;

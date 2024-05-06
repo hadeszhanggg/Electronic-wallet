@@ -198,15 +198,21 @@ exports.getWallet = async (req, res) => {
 /// API thêm một giao dịch sổ tiết kiệm
 exports.createPassbookRegistration = async (req, res) => {
     try {
-        const { amount_deposit, wallet_id, passbookId } = req.body;
-
+        const userId=req.userId;
+        // Tìm ví dựa trên userID
+        const wallet = await db.wallet.findOne({
+            where: {
+                userId: userId,
+            }, 
+          });
+        const { amount_deposit, passbookId } = req.body;
+        
         // Kiểm tra nếu walletId hoặc passbookId không được cung cấp
-        if (!wallet_id || !passbookId || !amount_deposit) {
+        if (!wallet || !passbookId || !amount_deposit) {
             return res.status(400).json({ message: "Wallet ID and Passbook ID or amount_deposit are required" });
         }
 
         // Kiểm tra nếu walletId hoặc passbookId không hợp lệ
-        const wallet = await db.wallet.findByPk(wallet_id);
         const passbook = await db.passbook.findByPk(passbookId);
         if (!wallet || !passbook) {
             return res.status(404).json({ message: "Wallet or Passbook not found" });
@@ -217,7 +223,6 @@ exports.createPassbookRegistration = async (req, res) => {
             return res.status(400).json({ message: "Insufficient balance in the wallet" });
         }
 
-
         // Lấy thông tin về kỳ hạn (period) của passbook
         const period = passbook.period;
 
@@ -227,7 +232,7 @@ exports.createPassbookRegistration = async (req, res) => {
 
         // Tạo một bản ghi mới trong bảng wallets_passbooks
         const newPassbookRegistration = await db.wallets_passbooks.create({
-            walletId: wallet_id,
+            walletId: wallet.id,
             passbookId: passbookId,
             amount_deposit: amount_deposit,
             expire: expireDateTime.format('YYYY-MM-DD HH:mm:ss')
