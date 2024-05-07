@@ -258,3 +258,33 @@ exports.getAllPassbook = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
+//Pay bill
+exports.payBill = async (req, res) => {
+    try {
+        const userId=req.userId;
+        const {billId}  = req.body;
+        const wallet = await db.wallet.findOne({
+            where: {
+                userId: userId,
+            }, 
+          });
+        const bill = await db.bill.findOne({
+            where: {
+                id: billId,
+            }, 
+          });
+        if(bill.paid==="false"){
+            if (wallet.account_balance < bill.total) {
+                return res.status(400).send({ message: "Insufficient balance" });
+            }
+            const currentDateTime = moment().tz('Asia/Ho_Chi_Minh');
+            bill.update({ paid: true, paid_date:  currentDateTime.format('YYYY-MM-DD HH:mm:ss')});
+            // Trừ số tiền từ số dư ví của người gửi
+            await wallet.decrement('account_balance', { by: bill.total });
+            return res.status(200).json({message: "Pay the bill successfully"});
+        }else return  res.status(500).send({ message: "This bill was paid!" });
+    } catch (error) {
+       // logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};

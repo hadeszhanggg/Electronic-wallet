@@ -86,4 +86,13 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+    app.post('/users/payBill', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+        try {
+            await controllers.payBill(req,res);
+            logging.info(`Pay the bill successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+        } catch (error) {
+            logging.error(`Failed to pay the bill with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/passbookRegistration`);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    });
 };
