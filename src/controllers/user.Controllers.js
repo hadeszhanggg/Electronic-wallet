@@ -198,15 +198,21 @@ exports.getWallet = async (req, res) => {
 /// API thêm một giao dịch sổ tiết kiệm
 exports.createPassbookRegistration = async (req, res) => {
     try {
-        const { amount_deposit, wallet_id, passbookId } = req.body;
-
+        const userId=req.userId;
+        // Tìm ví dựa trên userID
+        const wallet = await db.wallet.findOne({
+            where: {
+                userId: userId,
+            }, 
+          });
+        const { amount_deposit, passbookId } = req.body;
+        
         // Kiểm tra nếu walletId hoặc passbookId không được cung cấp
-        if (!wallet_id || !passbookId || !amount_deposit) {
+        if (!wallet || !passbookId || !amount_deposit) {
             return res.status(400).json({ message: "Wallet ID and Passbook ID or amount_deposit are required" });
         }
 
         // Kiểm tra nếu walletId hoặc passbookId không hợp lệ
-        const wallet = await db.wallet.findByPk(wallet_id);
         const passbook = await db.passbook.findByPk(passbookId);
         if (!wallet || !passbook) {
             return res.status(404).json({ message: "Wallet or Passbook not found" });
@@ -217,7 +223,6 @@ exports.createPassbookRegistration = async (req, res) => {
             return res.status(400).json({ message: "Insufficient balance in the wallet" });
         }
 
-
         // Lấy thông tin về kỳ hạn (period) của passbook
         const period = passbook.period;
 
@@ -227,7 +232,7 @@ exports.createPassbookRegistration = async (req, res) => {
 
         // Tạo một bản ghi mới trong bảng wallets_passbooks
         const newPassbookRegistration = await db.wallets_passbooks.create({
-            walletId: wallet_id,
+            walletId: wallet.id,
             passbookId: passbookId,
             amount_deposit: amount_deposit,
             expire: expireDateTime.format('YYYY-MM-DD HH:mm:ss')
@@ -239,5 +244,47 @@ exports.createPassbookRegistration = async (req, res) => {
     } catch (error) {
         console.error("Error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+//Get all passbook
+exports.getAllPassbook = async (req, res) => {
+    try {
+        const passbooks = await db.passbook.findAll({
+            attributes: ['id', 'passbook_name', 'description', 'interest_rate', 'period']
+        });
+        return res.status(200).json(passbooks);
+    } catch (error) {
+       // logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+//Pay bill
+exports.payBill = async (req, res) => {
+    try {
+        const userId=req.userId;
+        const {billId}  = req.body;
+        const wallet = await db.wallet.findOne({
+            where: {
+                userId: userId,
+            }, 
+          });
+        const bill = await db.bill.findOne({
+            where: {
+                id: billId,
+            }, 
+          });
+        if(bill.paid==="false"){
+            if (wallet.account_balance < bill.total) {
+                return res.status(400).send({ message: "Insufficient balance" });
+            }
+            const currentDateTime = moment().tz('Asia/Ho_Chi_Minh');
+            bill.update({ paid: true, paid_date:  currentDateTime.format('YYYY-MM-DD HH:mm:ss')});
+            // Trừ số tiền từ số dư ví của người gửi
+            await wallet.decrement('account_balance', { by: bill.total });
+            return res.status(200).json({message: "Pay the bill successfully"});
+        }else return  res.status(500).send({ message: "This bill was paid!" });
+    } catch (error) {
+       // logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
     }
 };

@@ -1,6 +1,6 @@
 const moment = require('moment-timezone');
 const db = require('../models'); // Import DB models hoặc thư viện tương tự
-
+const logging=require('./logging');
 // Function để kiểm tra và cập nhật sổ tiết kiệm
 async function checkAndUpdatePassbooks() {
     try {
@@ -41,7 +41,7 @@ async function checkAndUpdatePassbooks() {
 function timeUntilNextCheck() {
     try {
         const now = moment().tz('Asia/Ho_Chi_Minh');
-        // Thời gian hàng ngày 0:00:00 (theo múi giờ Hàn Quốc) của ngày tiếp theo
+        // Thời gian hàng ngày 0:00:00 (theo múi giờ VN) của ngày tiếp theo
         const nextCheckTime = moment().tz('Asia/Ho_Chi_Minh').add(1, 'days').startOf('day');
         const timeDiff = nextCheckTime.diff(now);
         return timeDiff;
@@ -59,6 +59,7 @@ function scheduleCheckAndUpdate() {
         // Đảm bảo rằng hàm checkAndUpdatePassbooks được gọi liên tục
         setInterval(async () => {
             await checkAndUpdatePassbooks();
+            logging.info("Check and update completed for today ");
             console.log('Check and update completed for today.');
         }, checkInterval);
     } catch (error) {
