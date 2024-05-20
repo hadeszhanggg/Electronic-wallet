@@ -68,6 +68,7 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+    //Đăng ký gói tiết kiệm
     app.post('/users/passbookRegistration', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
         try {
             await controllers.createPassbookRegistration(req, res);
@@ -95,4 +96,14 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+         //Route lấy tất cả bills của user dựa trên accessToken của user
+         app.get('/users/getAllTransactions', authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getAllTransactions(req,res);
+                logging.info(`get all bills successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+            } catch (error) {
+                logging.error(`get all bills failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
 };

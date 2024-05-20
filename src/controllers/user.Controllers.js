@@ -164,7 +164,7 @@ exports.transferMoney = async (req, res) => {
         } 
         await recipientWallet.increment('account_balance', { by: transferAmount });
         // Tạo bản ghi lịch sử giao dịch
-        const transactionContent = content + ` Email user recipient is ${recipientUsernameOrEmail}`;
+        const transactionContent = content + `Email user recipient is ${recipientUsernameOrEmail}`;
         const newTransactionHistory = await db.transactionHistory.createTransactionHistory(senderWallet.id, 2, transactionContent, transferAmount);
         return res.status(200).send(newTransactionHistory);
     } catch (error) {
@@ -240,6 +240,9 @@ exports.createPassbookRegistration = async (req, res) => {
         // Trừ số tiền amount_deposit từ account_balance
         const updatedBalance = wallet.account_balance - amount_deposit;
         await wallet.update({ account_balance: updatedBalance });
+         // Tạo bản ghi lịch sử giao dịch
+         const transactionContent = `Register passbook ${passbook.passbook_name}`;
+         const newTransactionHistory = await db.transactionHistory.createTransactionHistory(wallet.id, 3, transactionContent, amount_deposit);
         return res.status(201).json(newPassbookRegistration);
     } catch (error) {
         console.error("Error:", error);
@@ -273,7 +276,6 @@ exports.payBill = async (req, res) => {
                 id: billId,
             }, 
           });
-        if(bill.paid==="false"){
             if (wallet.account_balance < bill.total) {
                 return res.status(400).send({ message: "Insufficient balance" });
             }
@@ -281,10 +283,33 @@ exports.payBill = async (req, res) => {
             bill.update({ paid: true, paid_date:  currentDateTime.format('YYYY-MM-DD HH:mm:ss')});
             // Trừ số tiền từ số dư ví của người gửi
             await wallet.decrement('account_balance', { by: bill.total });
+             // Tạo bản ghi lịch sử giao dịch
+            const transactionContent = `Pay bill ${bill.type}`;
+            const newTransactionHistory = await db.transactionHistory.createTransactionHistory(wallet.id,3, transactionContent, bill.total);
             return res.status(200).json({message: "Pay the bill successfully"});
-        }else return  res.status(500).send({ message: "This bill was paid!" });
     } catch (error) {
        // logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+exports.getAllTransactions = async (req, res) => {
+    try {
+      const userId = req.userId;
+      // tìm ví dựa trên userID 
+      const userWallet = await db.wallet.findOne({ where: { userId: userId } });
+      
+      if (!userWallet) {
+        return res.status(404).send({ message: "User wallet not found" });
+      }
+      const walletId = userWallet.id;
+      // Lấy tất cả bills thuộc ví (walletId)
+      const trans = await db.transactionHistory.findAll({ 
+        where: { walletId: walletId },
+        attributes: ['id', 'content','amount','date','tranTypeId']
+    });
+      return res.status(200).json(trans);
+    } catch (error) {
+        logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
