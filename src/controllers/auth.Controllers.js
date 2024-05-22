@@ -126,6 +126,7 @@ module.exports = {
                 id: user.id,
                 username: user.username,
                 email: user.email,
+                avatar: user.avatar,
                 roles: authorities,
                 accessToken: token,
                 refreshToken: refreshToken,

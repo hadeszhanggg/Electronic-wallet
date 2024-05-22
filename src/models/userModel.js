@@ -19,6 +19,10 @@ module.exports = (sequelize, Sequelize) => {
       date_of_birth: {
         type: Sequelize.DATE
       },
+      avatar: {
+        type: Sequelize.TEXT,
+        default: "default"
+      }
     });
     User.associate = (models) => {
       User.belongsToMany(models.role, {

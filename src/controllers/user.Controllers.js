@@ -313,3 +313,22 @@ exports.getAllTransactions = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
+//Get all user
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await db.user.findAll({
+            attributes: ['id', 'username', 'email', 'address', 'avatar', 'gender', 'date_of_birth'],
+            include: [{
+                model: db.role,
+                attributes: [],
+                where: {
+                    name: { [db.Sequelize.Op.ne]: 'admin' }
+                }
+            }]
+        });
+        return res.status(200).json(users);
+    } catch (error) {
+        logging.error(`Get all user failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getAllUsers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};

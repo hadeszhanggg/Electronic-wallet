@@ -100,9 +100,19 @@ module.exports = function (app) {
          app.get('/users/getAllTransactions', authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
             try {
                 await controllers.getAllTransactions(req,res);
-                logging.info(`get all bills successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+                logging.info(`get all transactions successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
             } catch (error) {
-                logging.error(`get all bills failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+                logging.error(`get all transactions failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        //Route lấy toàn bộ user
+        app.get('/users/getAllUser', authJwt.authenticateToken, async (req, res) => {
+            try {
+                await controllers.getAllUsers(req,res);
+                logging.info(`get all user successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+            } catch (error) {
+                logging.error(`get all user failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
                 res.status(500).json({ message: "Internal Server Error" });
             }
         });
