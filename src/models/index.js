@@ -33,6 +33,7 @@ db.refreshToken = require("./jwtModel.js")(sequelize, Sequelize);
 db.transactionType = require("./transactionTypeModel.js")(sequelize, Sequelize);
 db.transactionHistory = require("./transactionHistoryModel.js")(sequelize, Sequelize);
 db.passbook =require("./passbookModel.js")(sequelize,Sequelize);
+db.friendship = require("./friendshipModel.js")(sequelize, Sequelize);
 //Define relationships between tables.
 db.role.belongsToMany(db.user, {
   through: "user_roles",
@@ -98,7 +99,13 @@ db.wallets_passbooks = sequelize.define('wallets_passbooks', {
     }
   ]
 });
-
+// Friendship relationships
+db.user.belongsToMany(db.user, {
+  as: 'Friends',
+  through: db.friendship,
+  foreignKey: 'userId',
+  otherKey: 'friendId'
+});
 // Wallet có nhiều Passbook và ngược lại
 db.wallet.hasMany(db.wallets_passbooks, { foreignKey: 'walletId' });
 db.wallets_passbooks.belongsTo(db.wallet, { foreignKey: 'walletId' });

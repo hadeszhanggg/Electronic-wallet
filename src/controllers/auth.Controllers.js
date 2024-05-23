@@ -78,7 +78,6 @@ module.exports = {
       
     signin: async (req, res) => {
         try {
-        
             const clientIp = requestIp.getClientIp(req);
             const consecutiveLoginFailures = ipFailures[clientIp] || 0;
             if(!req.body.username||!req.body.password)
@@ -101,7 +100,6 @@ module.exports = {
                     userId: user.id,
                 }, 
               });
-        
             if (!user) {
               logging.warn( `Login error, cannot find account name or email with username: [${req.body.username}]`);
               ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
@@ -128,6 +126,7 @@ module.exports = {
                 id: user.id,
                 username: user.username,
                 email: user.email,
+                avatar: user.avatar,
                 roles: authorities,
                 accessToken: token,
                 refreshToken: refreshToken,
@@ -139,6 +138,7 @@ module.exports = {
                 prestige_score: wallet.prestige_score,
                 account_balance: wallet.account_balance,
               });
+              
               logging.info( `Successfully accessed by user ID: [${user.id}]with email: [${user.email}], IP address: [${clientIp}]`);
             });
         } catch (error) {

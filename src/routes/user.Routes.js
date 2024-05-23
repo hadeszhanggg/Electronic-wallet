@@ -68,6 +68,7 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+    //Đăng ký gói tiết kiệm
     app.post('/users/passbookRegistration', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
         try {
             await controllers.createPassbookRegistration(req, res);
@@ -95,4 +96,52 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+         //Route lấy tất cả bills của user dựa trên accessToken của user
+         app.get('/users/getAllTransactions', authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getAllTransactions(req,res);
+                logging.info(`get all transactions successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+            } catch (error) {
+                logging.error(`get all transactions failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        //Route lấy toàn bộ user
+        app.get('/users/getAllUser', authJwt.authenticateToken, async (req, res) => {
+            try {
+                await controllers.getAllUsers(req,res);
+                logging.info(`get all user successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+            } catch (error) {
+                logging.error(`get all user failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        //Add friend
+        app.post('/users/addFriend', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.addFriend(req, res);
+                logging.info(`Add friend successfully for user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Failed to add friend with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/addFriend`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        app.get('/users/getAllFriends', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getAllFriend(req, res);
+                logging.info(`Get all friends successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Get all friends failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllFriends`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        app.get('/users/getUnconfirmedFriends', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getUnconfirmedFriend(req,res);
+                logging.info(`Get unconfirmed friends successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Get unconfirmed friends failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllFriends`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
 };

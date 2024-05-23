@@ -33,7 +33,7 @@ module.exports = (sequelize, Sequelize) => {
   TransactionHistory.belongsTo(models.transaction_type, {
     foreignKey: {
       allowNull: false,
-      field: 'tranTypeId' // Tên trường foreign key trên bảng transaction_histories
+      field: 'tranTypeId' 
     }
   });
   TransactionHistory.belongsTo(models.wallet, {
@@ -53,7 +53,7 @@ module.exports = (sequelize, Sequelize) => {
         content: Content,
         amount: Amount,
         walletId: Wallet_id,
-        transactionType:Type,
+        tranTypeId: Type,
         date:Date,
       });
       return transaction;
