@@ -1,3 +1,4 @@
+const { where } = require('sequelize');
 const logging = require('../middleware/logging');
 const db = require("../models");
 const jwt = require("jsonwebtoken");
@@ -329,6 +330,102 @@ exports.getAllUsers = async (req, res) => {
         return res.status(200).json(users);
     } catch (error) {
         logging.error(`Get all user failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getAllUsers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+//Add new friend
+exports.addFriend = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { friendUsernameOrEmail } = req.body;
+        // Tìm người dùng muốn thêm bạn
+        const friend = await db.user.findOne({
+            where: {
+                [db.Sequelize.Op.or]: [{ username: friendUsernameOrEmail }, { email: friendUsernameOrEmail }]
+            },
+            attributes: ['id', 'username', 'email']
+        });
+        if (!friend) {
+            return res.status(404).json({ message: "Friend not found" });
+        }
+        // Kiểm tra xem người dùng và bạn có phải là cùng một người
+        if (userId === friend.id) {
+            return res.status(400).json({ message: "Cannot add yourself as a friend" });
+        }
+        // Kiểm tra xem đã là bạn của nhau chưa
+        const existingFriendship = await db.friendship.findOne({
+            where: {
+                userId: userId,
+                friendId: friend.id
+            }
+        });
+        
+        if (existingFriendship) {
+            return res.status(400).json({ message: "Already friends" });
+        }
+        // Thêm bạn mới vào bảng friends
+        await db.friendship.create({
+            userId: userId,
+            friendId: friend.id,
+            status: "unconfirmed"
+        });
+        return res.status(200).json({ message: `Friend ${friend.username} added successfully` });
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+// Lấy danh sách bạn bè đã được xác nhận
+exports.getAllFriend = async (req, res) => {
+    try {
+        const userId = req.userId;  
+        // Truy vấn trực tiếp từ bảng friendships để lấy danh sách bạn bè
+        const friendIds = await db.friendship.findAll({ 
+            where: {
+                userId: userId,
+                status: 'confirmed' 
+            },
+            attributes: ['friendId'] // chỉ lấy ra trường friendId
+        });
+        // Lấy danh sách id của các bạn bè
+        const friendIdList = friendIds.map(friend => friend.friendId);
+        // Truy vấn người dùng với các id bạn bè
+        const friends = await db.user.findAll({
+            where: {
+                id: friendIdList
+            },
+            attributes: ['id', 'username', 'email', 'address', 'avatar', 'gender', 'date_of_birth']
+        });
+
+        return res.status(200).json(friends);
+    } catch (error) {
+        logging.error(`Get friends list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getAllFriend.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+exports.getUnconfirmedFriend = async (req, res) => {
+    try {
+        const userId = req.userId;  
+        // Truy vấn trực tiếp từ bảng friendships để lấy danh sách bạn bè
+        const friendIds = await db.friendship.findAll({ 
+            where: {
+                userId: userId,
+                status: 'unconfirmed' 
+            },
+            attributes: ['friendId'] // chỉ lấy ra trường friendId
+        });
+        // Lấy danh sách id của các bạn bè
+        const friendIdList = friendIds.map(friend => friend.friendId);
+        // Truy vấn người dùng với các id bạn bè
+        const friends = await db.user.findAll({
+            where: {
+                id: friendIdList
+            },
+            attributes: ['id', 'username', 'email', 'address', 'avatar', 'gender', 'date_of_birth']
+        });
+        return res.status(200).json(friends);
+    } catch (error) {
+        logging.error(`Get friends list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getAllFriend.`);
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };

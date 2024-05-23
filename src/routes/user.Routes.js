@@ -116,4 +116,32 @@ module.exports = function (app) {
                 res.status(500).json({ message: "Internal Server Error" });
             }
         });
+        //Add friend
+        app.post('/users/addFriend', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.addFriend(req, res);
+                logging.info(`Add friend successfully for user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Failed to add friend with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/addFriend`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        app.get('/users/getAllFriends', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getAllFriend(req, res);
+                logging.info(`Get all friends successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Get all friends failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllFriends`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
+        app.get('/users/getUnconfirmedFriends', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getUnconfirmedFriend(req,res);
+                logging.info(`Get unconfirmed friends successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Get unconfirmed friends failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllFriends`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
 };
