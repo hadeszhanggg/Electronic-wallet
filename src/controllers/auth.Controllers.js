@@ -76,53 +76,66 @@ module.exports = {
         }
       },
       
-    signin: async (req, res) => {
+      signin: async (req, res) => {
         try {
             const clientIp = requestIp.getClientIp(req);
             const consecutiveLoginFailures = ipFailures[clientIp] || 0;
-            if(!req.body.username||!req.body.password)
-              return res.status(400).json({message: 'Username or password can not empty'})
-            const { username, password } = req.body;
-
-            if (consecutiveLoginFailures >= 5) {
-              // Record a warning if the IP address is warned more than 5 times
-             logging.error( `Possible brute-force attack from IP address: [${clientIp}], codeLocation: [signin] function in auth.Controllers.js`);
-             return res.status(429).json({ message: 'Login error!' });
-           }
-             // Kiểm tra xem người dùng tồn tại hay không
-             const user = await db.user.findOne({
-              where: {
-                  username: username,
-              },
-              });
-              const wallet = await db.wallet.findOne({
-                where: {
-                    userId: user.id,
-                }, 
-              });
-            if (!user) {
-              logging.warn( `Login error, cannot find account name or email with username: [${req.body.username}]`);
-              ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
-              return res.status(401).json({ message: 'Invalid username or password' });
+    
+            if (!req.body.username || !req.body.password) {
+                return res.status(400).json({ message: 'Username or password cannot be empty' });
             }
+    
+            const { username, password } = req.body;
+    
+            if (consecutiveLoginFailures >= 5) {
+                // Record a warning if the IP address has more than 5 failed login attempts
+                logging.error(`Possible brute-force attack from IP address: [${clientIp}], codeLocation: [signin] function in auth.Controllers.js`);
+                return res.status(429).json({ message: 'Too many login attempts. Please try again later.' });
+            }
+    
+            // Kiểm tra xem người dùng tồn tại hay không
+            const user = await db.user.findOne({
+                where: {
+                    username: username,
+                },
+            });
+    
+            if (!user) {
+                logging.warn(`Login error, cannot find account name or email with username: [${username}]`);
+                ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
+                return res.status(401).json({ message: 'Invalid username or password' });
+            }
+    
             // Kiểm tra mật khẩu
             const passwordMatch = await bcrypt.compare(password, user.password);
+    
             if (!passwordMatch) {
                 ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
-            const token = jwt.sign({ id: user.id }, config.secret, {
-              expiresIn: config.jwtExp,
+    
+            const wallet = await db.wallet.findOne({
+                where: {
+                    userId: user.id,
+                },
             });
+    
+            const token = jwt.sign({ id: user.id }, config.secret, {
+                expiresIn: config.jwtExp,
+            });
+    
             let refreshToken = await RefreshToken.createToken(user);
             let authorities = [];
-            // Set Consecutive Login Errors to 0 on successful login
+    
+            // Reset Consecutive Login Failures on successful login
             resetConsecutiveFailures(clientIp);
-            user.getRoles().then(roles => {
-              for (let i = 0; i < roles.length; i++) {
+    
+            const roles = await user.getRoles();
+            for (let i = 0; i < roles.length; i++) {
                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
-              }
-              res.status(200).send({
+            }
+    
+            res.status(200).send({
                 id: user.id,
                 username: user.username,
                 email: user.email,
@@ -132,21 +145,20 @@ module.exports = {
                 refreshToken: refreshToken,
                 is_active: user.is_active,
                 address: user.address,
-                gender: user.gender,    
+                gender: user.gender,
                 date_of_birth: user.date_of_birth,
                 wallet_id: wallet.id,
                 prestige_score: wallet.prestige_score,
                 account_balance: wallet.account_balance,
-              });
-              
-              logging.info( `Successfully accessed by user ID: [${user.id}]with email: [${user.email}], IP address: [${clientIp}]`);
             });
+    
+            logging.info(`Successfully accessed by user ID: [${user.id}] with email: [${user.email}], IP address: [${clientIp}]`);
         } catch (error) {
-          logging.error(`Login failed because this account was disabled with user ID: [${user.id}], input username: [${req.body.username}], input email: [${req.body.email}], password: [${req.body.password}], Invalid password, codeLocation: [signin] function in controllers/auth.controllers.js `)
+            logging.error(`Login failed: ${error.message}, input username: [${req.body.username}], codeLocation: [signin] function in controllers/auth.controllers.js`);
             res.status(500).json({ message: 'Internal Server Error' });
         }
     },
-};
+  };    
 exports.refreshToken = async (req, res) => {
   const { refreshToken: requestToken } = req.body;
   const userId = req.userId;

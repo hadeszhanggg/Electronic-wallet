@@ -385,7 +385,7 @@ exports.getAllFriend = async (req, res) => {
                 userId: userId,
                 status: 'confirmed' 
             },
-            attributes: ['friendId'] // chỉ lấy ra trường friendId
+            attributes: ['friendId'] 
         });
         // Lấy danh sách id của các bạn bè
         const friendIdList = friendIds.map(friend => friend.friendId);
@@ -403,7 +403,7 @@ exports.getAllFriend = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
-exports.getUnconfirmedFriend = async (req, res) => {
+exports.getUnconfirmedFriends = async (req, res) => {
     try {
         const userId = req.userId;  
         // Truy vấn trực tiếp từ bảng friendships để lấy danh sách bạn bè
@@ -412,7 +412,7 @@ exports.getUnconfirmedFriend = async (req, res) => {
                 userId: userId,
                 status: 'unconfirmed' 
             },
-            attributes: ['friendId'] // chỉ lấy ra trường friendId
+            attributes: ['friendId'] 
         });
         // Lấy danh sách id của các bạn bè
         const friendIdList = friendIds.map(friend => friend.friendId);

@@ -1,4 +1,6 @@
 const authJwt = require('../middleware/authJWT');
+const bcrypt = require('bcrypt');
+const db = require("../models");
 const controllers = require('../controllers/user.Controllers');
 const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill')
 const logging=require('../middleware/logging');
@@ -137,11 +139,31 @@ module.exports = function (app) {
         });
         app.get('/users/getUnconfirmedFriends', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
             try {
-                await controllers.getUnconfirmedFriend(req,res);
+                await controllers.getUnconfirmedFriends(req,res);
                 logging.info(`Get unconfirmed friends successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
             } catch (error) {
                 logging.error(`Get unconfirmed friends failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllFriends`);
                 res.status(500).json({ message: "Internal Server Error" });
             }
         });
+         //Route cho phép user sửa thông tin của chính mình.
+    app.put('/users/updateUser', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+        try {
+            console.log("toiday")
+                const userId = req.userId;
+                const { username, password, email, address, gender, date_of_birth, avatar } = req.body;
+                const hashedPassword = await bcrypt.hash(password, 10);
+                // Cập nhật thông tin người dùng trong cơ sở dữ liệu
+                const updatedUser = await db.user.update({ username, hashedPassword, address,email, gender, date_of_birth , avatar}, { where: { id: userId } });
+                if (updatedUser[0] === 1) {
+                    return res.status(200).json({ message: 'User information updated successfully' });
+                } else {
+                    return res.status(500).json({ message: 'Failed to update user information' });
+                }
+            
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: 'Internal Server Error' });
+        }
+    });   
 };
