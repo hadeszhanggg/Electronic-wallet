@@ -99,13 +99,19 @@ db.wallets_passbooks = sequelize.define('wallets_passbooks', {
     }
   ]
 });
-// Friendship relationships
 db.user.belongsToMany(db.user, {
   as: 'Friends',
   through: db.friendship,
   foreignKey: 'userId',
   otherKey: 'friendId'
 });
+db.user.belongsToMany(db.user, {
+  as: 'FriendRequests',
+  through: db.friendship,
+  foreignKey: 'friendId',
+  otherKey: 'userId'
+});
+
 // Wallet có nhiều Passbook và ngược lại
 db.wallet.hasMany(db.wallets_passbooks, { foreignKey: 'walletId' });
 db.wallets_passbooks.belongsTo(db.wallet, { foreignKey: 'walletId' });

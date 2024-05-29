@@ -333,99 +333,162 @@ exports.getAllUsers = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
-//Add new friend
 exports.addFriend = async (req, res) => {
     try {
         const userId = req.userId;
         const { friendUsernameOrEmail } = req.body;
-        // Tìm người dùng muốn thêm bạn
+
+        // Tìm kiếm user bạn bè qua username hoặc email
         const friend = await db.user.findOne({
             where: {
                 [db.Sequelize.Op.or]: [{ username: friendUsernameOrEmail }, { email: friendUsernameOrEmail }]
             },
             attributes: ['id', 'username', 'email']
         });
+
         if (!friend) {
             return res.status(404).json({ message: "Friend not found" });
         }
-        // Kiểm tra xem người dùng và bạn có phải là cùng một người
+
         if (userId === friend.id) {
             return res.status(400).json({ message: "Cannot add yourself as a friend" });
         }
-        // Kiểm tra xem đã là bạn của nhau chưa
+
+        // Kiểm tra nếu tồn tại lời mời kết bạn từ friend đến user
         const existingFriendship = await db.friendship.findOne({
             where: {
-                userId: userId,
-                friendId: friend.id
+                userId: friend.id,
+                friendId: userId,
+                isConfirmed: false
             }
         });
-        
+
         if (existingFriendship) {
+            // Cập nhật trạng thái lời mời kết bạn thành 'confirmed'
+            await existingFriendship.update({ isConfirmed: true });
+            return res.status(200).json({ message: `Friend request confirmed with ${friend.username}` });
+        }
+
+        let friendship;
+        let created;
+        try {
+            // Thử tạo mối quan hệ bạn bè mới
+            [friendship, created] = await db.friendship.findOrCreate({
+                where: {
+                    userId: Math.min(userId, friend.id),
+                    friendId: Math.max(userId, friend.id)
+                },
+                defaults: {
+                    userId: userId,
+                    friendId: friend.id,
+                    isConfirmed: false
+                }
+            });
+        } catch (findOrCreateError) {
+            console.error("findOrCreate Error:", findOrCreateError);
+            return res.status(500).json({ message: "Error creating friendship" });
+        }
+
+        if (!created && friendship.isConfirmed === true) {
             return res.status(400).json({ message: "Already friends" });
         }
-        // Thêm bạn mới vào bảng friends
-        await db.friendship.create({
-            userId: userId,
-            friendId: friend.id,
-            status: "unconfirmed"
-        });
-        return res.status(200).json({ message: `Friend ${friend.username} added successfully` });
+
+        if (!created) {
+            await friendship.update({ isConfirmed: false });
+        }
+
+        return res.status(200).json({ message: `Friend request sent to ${friend.username}` });
     } catch (error) {
         console.error("Error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
-// Lấy danh sách bạn bè đã được xác nhận
+
 exports.getAllFriend = async (req, res) => {
     try {
-        const userId = req.userId;  
-        // Truy vấn trực tiếp từ bảng friendships để lấy danh sách bạn bè
-        const friendIds = await db.friendship.findAll({ 
+        const userId = req.userId;
+        const friendships = await db.friendship.findAll({
             where: {
-                userId: userId,
-                status: 'confirmed' 
-            },
-            attributes: ['friendId'] // chỉ lấy ra trường friendId
+                [db.Sequelize.Op.or]: [{ userId }, { friendId: userId }],
+                isConfirmed: true
+            }
         });
-        // Lấy danh sách id của các bạn bè
-        const friendIdList = friendIds.map(friend => friend.friendId);
-        // Truy vấn người dùng với các id bạn bè
+
+        const friendIds = friendships.map(f => (f.userId === userId ? f.friendId : f.userId));
+        
         const friends = await db.user.findAll({
-            where: {
-                id: friendIdList
-            },
+            where: { id: friendIds },
             attributes: ['id', 'username', 'email', 'address', 'avatar', 'gender', 'date_of_birth']
         });
 
         return res.status(200).json(friends);
     } catch (error) {
-        logging.error(`Get friends list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getAllFriend.`);
+        console.error(`Get friends list failed: ${error.message}`);
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
-exports.getUnconfirmedFriend = async (req, res) => {
+
+exports.getUnconfirmedFriends = async (req, res) => {
     try {
-        const userId = req.userId;  
-        // Truy vấn trực tiếp từ bảng friendships để lấy danh sách bạn bè
-        const friendIds = await db.friendship.findAll({ 
+        const userId = req.userId;
+        const friendRequests = await db.friendship.findAll({
             where: {
-                userId: userId,
-                status: 'unconfirmed' 
-            },
-            attributes: ['friendId'] // chỉ lấy ra trường friendId
+                friendId: userId,
+                isConfirmed: false
+            }
         });
-        // Lấy danh sách id của các bạn bè
-        const friendIdList = friendIds.map(friend => friend.friendId);
-        // Truy vấn người dùng với các id bạn bè
-        const friends = await db.user.findAll({
+
+        const requesters = await db.user.findAll({
             where: {
-                id: friendIdList
+                id: friendRequests.map(req => req.userId)
             },
             attributes: ['id', 'username', 'email', 'address', 'avatar', 'gender', 'date_of_birth']
         });
-        return res.status(200).json(friends);
+
+        return res.status(200).json(requesters);
     } catch (error) {
-        logging.error(`Get friends list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getAllFriend.`);
+        console.error(`Get unconfirmed friends list failed: ${error.message}`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
+
+exports.confirmAddFriend = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { request, friendId } = req.body;
+        if (request === "refuse") {
+            const friendship = await db.friendship.findOne({
+                where: {
+                    userId: friendId,
+                    friendId: userId,
+                    isConfirmed: false
+                }
+            });
+            if (!friendship) {
+                return res.status(404).send({ message: "Friend request not found" });
+            }
+            await friendship.destroy();
+
+            return res.status(200).json({ message: "Friend request refused and removed" });
+        } else {
+            const friendship = await db.friendship.findOne({
+                where: {
+                    userId: friendId,
+                    friendId: userId,
+                    isConfirmed: false
+                }
+            });
+
+            if (!friendship) {
+                return res.status(404).send({ message: "Friend request not found" });
+            }
+
+            await friendship.update({ isConfirmed: true });
+
+            return res.status(200).json({ message: "Friend request confirmed" });
+        }
+    } catch (error) {
+        console.error(`Confirm friend request failed: ${error.message}`);
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
