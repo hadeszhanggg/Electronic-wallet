@@ -359,35 +359,42 @@ exports.addFriend = async (req, res) => {
             where: {
                 userId: friend.id,
                 friendId: userId,
-                status: 'unconfirmed'
+                isConfirmed: false
             }
         });
 
         if (existingFriendship) {
             // Cập nhật trạng thái lời mời kết bạn thành 'confirmed'
-            await existingFriendship.update({ status: 'confirmed', isConfirmed: true });
+            await existingFriendship.update({ isConfirmed: true });
             return res.status(200).json({ message: `Friend request confirmed with ${friend.username}` });
         }
 
-        // Nếu không có lời mời kết bạn từ trước, tạo mới lời mời kết bạn
-        const [friendship, created] = await db.friendship.findOrCreate({
-            where: {
-                userId: Math.min(userId, friend.id),
-                friendId: Math.max(userId, friend.id)
-            },
-            defaults: {
-                userId: userId,
-                friendId: friend.id,
-                status: 'unconfirmed'
-            }
-        });
+        let friendship;
+        let created;
+        try {
+            // Thử tạo mối quan hệ bạn bè mới
+            [friendship, created] = await db.friendship.findOrCreate({
+                where: {
+                    userId: Math.min(userId, friend.id),
+                    friendId: Math.max(userId, friend.id)
+                },
+                defaults: {
+                    userId: userId,
+                    friendId: friend.id,
+                    isConfirmed: false
+                }
+            });
+        } catch (findOrCreateError) {
+            console.error("findOrCreate Error:", findOrCreateError);
+            return res.status(500).json({ message: "Error creating friendship" });
+        }
 
-        if (!created && friendship.status === 'confirmed') {
+        if (!created && friendship.isConfirmed === true) {
             return res.status(400).json({ message: "Already friends" });
         }
 
         if (!created) {
-            await friendship.update({ status: 'unconfirmed' });
+            await friendship.update({ isConfirmed: false });
         }
 
         return res.status(200).json({ message: `Friend request sent to ${friend.username}` });
@@ -448,23 +455,38 @@ exports.getUnconfirmedFriends = async (req, res) => {
 exports.confirmAddFriend = async (req, res) => {
     try {
         const userId = req.userId;
-        const { friendId } = req.body;
-
-        const friendship = await db.friendship.findOne({
-            where: {
-                userId: Math.min(userId, friendId),
-                friendId: Math.max(userId, friendId),
-                isConfirmed: false
+        const { request, friendId } = req.body;
+        if (request === "refuse") {
+            const friendship = await db.friendship.findOne({
+                where: {
+                    userId: friendId,
+                    friendId: userId,
+                    isConfirmed: false
+                }
+            });
+            if (!friendship) {
+                return res.status(404).send({ message: "Friend request not found" });
             }
-        });
+            await friendship.destroy();
 
-        if (!friendship) {
-            return res.status(404).send({ message: "Friend request not found" });
+            return res.status(200).json({ message: "Friend request refused and removed" });
+        } else {
+            const friendship = await db.friendship.findOne({
+                where: {
+                    userId: friendId,
+                    friendId: userId,
+                    isConfirmed: false
+                }
+            });
+
+            if (!friendship) {
+                return res.status(404).send({ message: "Friend request not found" });
+            }
+
+            await friendship.update({ isConfirmed: true });
+
+            return res.status(200).json({ message: "Friend request confirmed" });
         }
-
-        await friendship.update({ isConfirmed: true });
-
-        return res.status(200).json({ message: "Friend request confirmed" });
     } catch (error) {
         console.error(`Confirm friend request failed: ${error.message}`);
         return res.status(500).send({ message: "Internal Server Error" });
