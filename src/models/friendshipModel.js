@@ -2,17 +2,22 @@ module.exports = (sequelize, Sequelize) => {
   const Friendship = sequelize.define("friendships", {
     userId: {
       type: Sequelize.INTEGER,
-      primaryKey: true,
-      field: 'userId' 
+      allowNull: false,
     },
     friendId: {
       type: Sequelize.INTEGER,
-      primaryKey: true,
-      field: 'friendId'  
+      allowNull: false,
     },
-    status: {
-      type: Sequelize.TEXT,
-      allowNull: false
+    isConfirmed: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    }
+  }, {
+    uniqueKeys: {
+      uniqueFriendship: {
+        fields: ['userId', 'friendId']
+      }
     }
   });
 

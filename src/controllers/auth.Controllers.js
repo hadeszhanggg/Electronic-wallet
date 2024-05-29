@@ -35,6 +35,7 @@ module.exports = {
               email: email,
               address: address,
               gender: gender,
+              avatar: "default",
               date_of_birth: parseDate(date_of_birth),
           });
             // Gán vai trò mặc định (role_id = 1)

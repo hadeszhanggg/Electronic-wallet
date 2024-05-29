@@ -147,23 +147,35 @@ module.exports = function (app) {
             }
         });
          //Route cho phép user sửa thông tin của chính mình.
-    app.put('/users/updateUser', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
-        try {
-            console.log("toiday")
-                const userId = req.userId;
-                const { username, password, email, address, gender, date_of_birth, avatar } = req.body;
-                const hashedPassword = await bcrypt.hash(password, 10);
-                // Cập nhật thông tin người dùng trong cơ sở dữ liệu
-                const updatedUser = await db.user.update({ username, hashedPassword, address,email, gender, date_of_birth , avatar}, { where: { id: userId } });
-                if (updatedUser[0] === 1) {
-                    return res.status(200).json({ message: 'User information updated successfully' });
-                } else {
-                    return res.status(500).json({ message: 'Failed to update user information' });
+        app.put('/users/updateUser', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                console.log("toiday")
+                    const userId = req.userId;
+                    const { username, password, email, address, gender, date_of_birth, avatar } = req.body;
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    // Cập nhật thông tin người dùng trong cơ sở dữ liệu
+                    const updatedUser = await db.user.update({ username, hashedPassword, address,email, gender, date_of_birth , avatar}, { where: { id: userId } });
+                    if (updatedUser[0] === 1) {
+                        return res.status(200).json({ message: 'User information updated successfully' });
+                    } else {
+                        return res.status(500).json({ message: 'Failed to update user information' });
+                    }
+                
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: 'Internal Server Error' });
+            }
+        });   
+        app.post('/users/confirmFriend', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            try {
+                if (!req.body.friendId) {
+                    return res.status(400).json({ message: "friendId is required" });
                 }
-            
-        } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: 'Internal Server Error' });
-        }
-    });   
+                await controllers.confirmAddFriend(req,res);
+                logging.info(`Get unconfirmed friends successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`);
+            } catch (error) {
+                logging.error(`Get unconfirmed friends failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllFriends`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
 };
