@@ -71,7 +71,27 @@ exports.getUnpaidBills = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
-
+exports.getUnusedVouchersByType = async (req, res) => {
+    try {
+        const {type}=req.body;
+        const userId = req.userId;
+        // Tìm ví dựa trên userID
+        const userWallet = await db.wallet.findOne({ where: { userId: userId } });
+        if (!userWallet) {
+            return res.status(404).send({ message: "User wallet not found" });
+        }
+        const walletId = userWallet.id;
+        // Lấy tất cả các voucher chưa sử dụng thuộc ví (walletId)
+        const unusedVouchers = await db.voucher.findAll({
+            where: { walletId: walletId, used: false, type: type },
+            attributes: ['id', 'voucher_name', 'description','type', 'discount', 'exp'],
+        });
+        return res.status(200).json(unusedVouchers);
+    } catch (error) {
+        logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
 exports.getUnusedVouchers = async (req, res) => {
     try {
         const userId = req.userId;
