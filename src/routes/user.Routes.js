@@ -159,7 +159,6 @@ module.exports = function (app) {
          //Route cho phép user sửa thông tin của chính mình.
         app.put('/users/updateUser', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
             try {
-                console.log("toiday")
                     const userId = req.userId;
                     const { username, password, email, address, gender, date_of_birth, avatar } = req.body;
                     const hashedPassword = await bcrypt.hash(password, 10);
