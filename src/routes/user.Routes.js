@@ -42,6 +42,16 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     });
+         //Route lấy danh sách các vouchers chưa sử dụng theo loai của user dựa trên accessToken của user
+         app.post('/users/getUnusedVouchersByType', authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
+            try {
+                await controllers.getUnusedVouchersByType(req,res);
+                logging.info(`get unused voucher list successfully from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}]`) 
+            } catch (error) {
+                logging.error(`get unused voucher list failed with detail: [${error.message}] from user ID: [${req.userId}], email: [${req.userEmail}] and client IP: [${req.clientIp}], from routes: /users/getAllBills`);
+                res.status(500).json({ message: "Internal Server Error" });
+            }
+        });
       //Route lấy danh sách các bills chưa thanh toán của user dựa trên accessToken của user
      app.get('/users/getUnpaidBills', authJwt.authenticateToken,  authJwt.logUserInfo, async (req, res) => {
         try {
@@ -149,7 +159,6 @@ module.exports = function (app) {
          //Route cho phép user sửa thông tin của chính mình.
         app.put('/users/updateUser', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
             try {
-                console.log("toiday")
                     const userId = req.userId;
                     const { username, password, email, address, gender, date_of_birth, avatar } = req.body;
                     const hashedPassword = await bcrypt.hash(password, 10);

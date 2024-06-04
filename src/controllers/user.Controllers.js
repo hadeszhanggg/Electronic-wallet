@@ -71,7 +71,27 @@ exports.getUnpaidBills = async (req, res) => {
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
-
+exports.getUnusedVouchersByType = async (req, res) => {
+    try {
+        const {type}=req.body;
+        const userId = req.userId;
+        // Tìm ví dựa trên userID
+        const userWallet = await db.wallet.findOne({ where: { userId: userId } });
+        if (!userWallet) {
+            return res.status(404).send({ message: "User wallet not found" });
+        }
+        const walletId = userWallet.id;
+        // Lấy tất cả các voucher chưa sử dụng thuộc ví (walletId)
+        const unusedVouchers = await db.voucher.findAll({
+            where: { walletId: walletId, used: false, type: type },
+            attributes: ['id', 'voucher_name', 'description','type', 'discount', 'exp'],
+        });
+        return res.status(200).json(unusedVouchers);
+    } catch (error) {
+        logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        return res.status(500).send({ message: "Internal Server Error" });
+    }
+};
 exports.getUnusedVouchers = async (req, res) => {
     try {
         const userId = req.userId;
@@ -266,17 +286,40 @@ exports.getAllPassbook = async (req, res) => {
 exports.payBill = async (req, res) => {
     try {
         const userId=req.userId;
-        const {billId}  = req.body;
+        const {billId, voucherId}  = req.body;
         const wallet = await db.wallet.findOne({
             where: {
                 userId: userId,
             }, 
-          });
+        });
         const bill = await db.bill.findOne({
             where: {
                 id: billId,
             }, 
-          });
+        });
+        if(voucherId!=null){
+            const voucher = await db.voucher.findOne({
+                where: {
+                    id: voucherId,
+                }, 
+              });
+            if(voucher.type=bill.type)
+            {
+                const sale = voucher.discount*bill.total;
+                if (wallet.account_balance <(bill.total-sale)) {
+                    return res.status(400).send({ message: "Insufficient balance" });
+                }
+                const currentDateTime = moment().tz('Asia/Ho_Chi_Minh');
+                bill.update({ paid: true, paid_date: currentDateTime.format('YYYY-MM-DD HH:mm:ss')});
+                // Trừ số tiền từ số dư ví của người gửi
+                await wallet.decrement('account_balance', { by: (bill.total-sale)});
+                // Tạo bản ghi lịch sử giao dịch
+                const transactionContent = `Pay bill ${bill.type}`;
+                const newTransactionHistory = await db.transactionHistory.createTransactionHistory(wallet.id,3, transactionContent,(bill.total-sale));
+                voucher.update({used: true, used_date: currentDateTime.format('YYYY-MM-DD HH:mm:ss')})
+                return res.status(200).json({message: "Pay the bill successfully"});
+            }else res.status(400).json({message: "Voucher type must like bill type!"});
+        }else{
             if (wallet.account_balance < bill.total) {
                 return res.status(400).send({ message: "Insufficient balance" });
             }
@@ -288,8 +331,9 @@ exports.payBill = async (req, res) => {
             const transactionContent = `Pay bill ${bill.type}`;
             const newTransactionHistory = await db.transactionHistory.createTransactionHistory(wallet.id,3, transactionContent, bill.total);
             return res.status(200).json({message: "Pay the bill successfully"});
-    } catch (error) {
-       // logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
+        }   
+    }catch (error) {
+        //logging.error(`Get unused voucher list failed with detail: [${error.message}], from user ID: [${req.userId}], email: [${req.userEmail}] and Client IP: [${req.clientIp}], from Controller: getUnusedVouchers.`);
         return res.status(500).send({ message: "Internal Server Error" });
     }
 };
@@ -362,13 +406,11 @@ exports.addFriend = async (req, res) => {
                 isConfirmed: false
             }
         });
-
         if (existingFriendship) {
             // Cập nhật trạng thái lời mời kết bạn thành 'confirmed'
             await existingFriendship.update({ isConfirmed: true });
             return res.status(200).json({ message: `Friend request confirmed with ${friend.username}` });
         }
-
         let friendship;
         let created;
         try {
