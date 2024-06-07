@@ -51,7 +51,7 @@ function initial() {
         }
    })
 }
-db.sequelize.sync({ force: false}).then(() => {
+db.sequelize.sync({ force:false}).then(() => {
     initial();
     scheduleCheckAndUpdate();
 });

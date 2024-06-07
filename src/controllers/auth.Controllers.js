@@ -135,7 +135,6 @@ module.exports = {
             for (let i = 0; i < roles.length; i++) {
                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
             }
-    
             res.status(200).send({
                 id: user.id,
                 username: user.username,
@@ -202,6 +201,33 @@ exports.refreshToken = async (req, res) => {
     return res.status(500).send({ message: "error!"});
   }
 };
+exports.forgotPassword = async (req, res) => {
+  try{
+    const { username, password, email, address, gender, date_of_birth } = req.body;   
+      const user = await db.user.findOne({
+        where: {
+            email: email,
+            username: username
+        }, 
+      });
+      const dateOfBirth = parseDate(date_of_birth);
+      if(user.email===email&&user.username===username&&user.address===address&&user.gender===gender&&user.date_of_birth===dateOfBirth)
+    {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        // Cập nhật thông tin người dùng trong cơ sở dữ liệu
+        const updatedUser = await db.user.update({ password: hashedPassword}, { where: { id: user.id } });
+        if (updatedUser[0] === 1) {
+            return res.status(200).json({ message: 'New password updated successfully' });
+        } else {
+            return res.status(500).json({ message: 'Failed to update new password for user!' });
+        }
+    }else return res.status(401).json({ message: 'The information you provided is not accurate!' });
+  }catch (err) {
+  logger.log('error',`Error: [${err.message}], IP address: [${clientIp}], User ID: [${userId}], email: [${userEmail}], codeLocation: [refreshToken] function in controllers/authController.js` );
+  return res.status(500).send({ message: "error!"});
+}
+};
+
 function parseDate(dateString) {
   // Phân tách chuỗi ngày tháng thành mảng
   var parts = dateString.split('/');
