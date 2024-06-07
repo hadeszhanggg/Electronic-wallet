@@ -1,4 +1,6 @@
 const express = require('express');
+const db = require("../models");
+const bcrypt = require('bcrypt');
 const authController = require('../controllers/auth.Controllers');
 module.exports = function (app) {
   app.use(function (req, res, next) {
@@ -12,6 +14,15 @@ module.exports = function (app) {
 
   router.post('/signup', authController.signup);
   router.post('/signin', authController.signin);
+   //Route forgot password
+   router.put('/forgotPassword', async (req, res) => {
+    try {
+        authController.forgotPassword(req,res);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+});   
 
   app.use('/auth', router);
 };

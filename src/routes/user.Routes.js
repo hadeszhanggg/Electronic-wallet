@@ -4,6 +4,7 @@ const db = require("../models");
 const controllers = require('../controllers/user.Controllers');
 const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill')
 const logging=require('../middleware/logging');
+const { add } = require('winston');
 module.exports = function (app) {
     app.use(function (req, res, next) {
         res.header(
