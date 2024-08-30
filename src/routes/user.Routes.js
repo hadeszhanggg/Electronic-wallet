@@ -188,4 +188,17 @@ module.exports = function (app) {
                 res.status(500).json({ message: "Internal Server Error" });
             }
         });
+        app.post('/users/addDevice', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+            const { token } = req.body;
+            if (!token) {
+                return res.status(400).json({ success: false, message: 'Token is required' });
+            }
+            try {
+                await controllers.AddDevice(req, res);
+            } catch (error) {
+                console.error('Error saving token:', error);
+                return res.status(500).json({ success: false, message: 'Internal server error' });
+            }
+        });
+        
 };

@@ -1,5 +1,5 @@
 const authJwt = require('../middleware/authJWT');
-const { CreateBill,CreateVoucher, CreatePassbook } = require('../controllers/admin.Controllers');
+const { sendNotificationToUser, CreateBill,CreateVoucher, CreatePassbook } = require('../controllers/admin.Controllers');
 const { checkBillInfo,checkVouchersInfo } = require('../middleware/checkInforBill')
 const logging=require('../middleware/logging');
 module.exports = function (app) {
@@ -105,4 +105,16 @@ module.exports = function (app) {
             res.status(500).json({ message: "Internal Server Error" });
         }
     }); 
+    //Send notification
+    app.post('/admin/sendNotification', authJwt.authenticateToken, authJwt.logUserInfo, async (req, res) => {
+        try {
+                await sendNotificationToUser(req, res);
+                logging.info(`Notification sent successfully to token: [${req.body.token}] by user ID: [${req.userId}]`);
+              
+        } catch (error) {
+            logging.error(`Failed to send notification with detail: [${error.message}] by user ID: [${req.userId}]`);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    });
+    
 };

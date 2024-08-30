@@ -1,6 +1,26 @@
 const moment = require('moment-timezone');
-const db = require('../models'); // Import DB models hoặc thư viện tương tự
+const db = require('../models'); 
 const logging=require('./logging');
+const admin = require('firebase-admin');
+const { sendNotification } = require('../configs/firebaseConfig');
+
+
+// Gửi notifications mỗi ngày
+async function sendDailyNotifications() {
+    try {
+        const users = await db.user.findAll();
+
+        for (const user of users) {
+            if (user.deviceid) {
+                const title = 'Daily Notification';
+                const body = 'This is daily notification was sent every day from NT Tech E-Wallet!'
+                sendNotification(title, body, user.deviceid)
+            }
+        }
+    } catch (error) {
+        console.error('Error sending daily notifications:', error);
+    }
+}
 // Function để kiểm tra và cập nhật sổ tiết kiệm
 async function checkAndUpdatePassbooks() {
     try {
@@ -54,10 +74,11 @@ function timeUntilNextCheck() {
 function scheduleCheckAndUpdate() {
     try {
         console.log('Scheduling check and update...');
-        const checkInterval = timeUntilNextCheck();
-
+        // const checkInterval = timeUntilNextCheck();
+        const checkInterval = 1 * 60 * 1000;
         // Đảm bảo rằng hàm checkAndUpdatePassbooks được gọi liên tục
         setInterval(async () => {
+            await sendDailyNotifications();
             await checkAndUpdatePassbooks();
             logging.info("Check and update completed for today ");
             console.log('Check and update completed for today.');
@@ -66,5 +87,6 @@ function scheduleCheckAndUpdate() {
         console.error('Error scheduling check and update:', error);
     }
 }
+
 
 module.exports = { scheduleCheckAndUpdate };

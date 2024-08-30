@@ -5,6 +5,7 @@ const cors = require('cors');
 require("dotenv").config();
 const http = require('http');
 const { Server } = require('socket.io');
+app.use(bodyParser.json()); 
 const server = http.createServer(app);
 const {scheduleCheckAndUpdate}=require("./src/middleware/scheduleFunction");
 const io = new Server(server, {

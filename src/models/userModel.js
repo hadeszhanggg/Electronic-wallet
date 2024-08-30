@@ -21,6 +21,9 @@ module.exports = (sequelize, Sequelize) => {
     avatar: {
       type: Sequelize.TEXT,
       default: "default"
+    }, 
+    deviceid:{
+      type: Sequelize.TEXT,
     }
   });
 

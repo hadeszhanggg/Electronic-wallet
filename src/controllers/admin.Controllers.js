@@ -1,6 +1,29 @@
-// controllers/bill.controllers.js
 const { bill,voucher,passbook } = require('../models');
 const logging = require('../middleware/logging');
+const db = require("../models");
+const { sendNotification } = require('../configs/firebaseConfig');
+
+exports.sendNotificationToUser = async (req, res) => {
+    const { title, body, username } = req.body;
+    const user = await db.user.findOne({
+        where: {
+            username: username,
+        },
+    });
+
+    if (user && user.deviceid) {
+        const result = await sendNotification(title, body, user.deviceid);
+
+        if (result.success) {
+            return res.status(200).send({ success: true });
+        } else {
+            return res.status(500).send({ success: false, error: result.error });
+        }
+    } else {
+        return res.status(404).send({ success: false, error: 'User or device ID not found' });
+    }
+};
+
 //hàm tạo một bill mới
 exports.CreateBill = async (req, res) => {
     try {
@@ -59,3 +82,4 @@ exports.CreatePassbook = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.', detail: error.message });
     }
 };
+
