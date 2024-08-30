@@ -6,7 +6,7 @@ const RefreshToken = db.refreshToken;
 const jwt = require("jsonwebtoken");
 const requestIp = require('request-ip');
 const logging=require('../middleware/logging');
-const ipFailures = {}; 
+const ipFailures = {};
           // Function resets consecutiveLoginFailures variable to 0 for each IP address
           function resetConsecutiveFailures(ip) {
             ipFailures[ip] = 0;
@@ -22,12 +22,13 @@ const ipFailures = {};
 module.exports = {
     signup: async (req, res) => {
         try {
+          console.log(req.rawHeaders);
           // Sử dụng middleware kiểm tra ràng buộc
           validateSignup(req, res, async () => {
             const { username, password, email, address, gender, date_of_birth } = req.body;
             // Mã hóa mật khẩu
             const hashedPassword = await bcrypt.hash(password, 10);
-            
+
             // Tạo người dùng mới
             const newUser = await db.user.create({
               username: username,
@@ -44,9 +45,9 @@ module.exports = {
                 id: 1, // ID của vai trò mặc định
               },
             });
-    
+
             await newUser.addRole(defaultRole);
-    
+
             // Tạo refreshToken
             const refreshToken = await db.refreshToken.createToken(newUser);
             const createWallet = await db.wallet.createWallet(newUser);
@@ -56,9 +57,9 @@ module.exports = {
               username: newUser.username,
               email: newUser.email,
               address: newUser.address,
-              date_of_birth: newUser.date_of_birth,          
+              date_of_birth: newUser.date_of_birth,
             };
-    
+
             logging.info(`Create new account succesfully with ${user}`);
             res.json({ message: "Signup new account succesfully!" });
           });
@@ -76,61 +77,61 @@ module.exports = {
           }
         }
       },
-      
+
       signin: async (req, res) => {
         try {
             const clientIp = requestIp.getClientIp(req);
             const consecutiveLoginFailures = ipFailures[clientIp] || 0;
-    
+
             if (!req.body.username || !req.body.password) {
                 return res.status(400).json({ message: 'Username or password cannot be empty' });
             }
-    
+
             const { username, password } = req.body;
-    
+
             if (consecutiveLoginFailures >= 5) {
                 // Record a warning if the IP address has more than 5 failed login attempts
                 logging.error(`Possible brute-force attack from IP address: [${clientIp}], codeLocation: [signin] function in auth.Controllers.js`);
                 return res.status(429).json({ message: 'Too many login attempts. Please try again later.' });
             }
-    
+
             // Kiểm tra xem người dùng tồn tại hay không
             const user = await db.user.findOne({
                 where: {
                     username: username,
                 },
             });
-    
+
             if (!user) {
                 logging.warn(`Login error, cannot find account name or email with username: [${username}]`);
                 ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
-    
+
             // Kiểm tra mật khẩu
             const passwordMatch = await bcrypt.compare(password, user.password);
-    
+
             if (!passwordMatch) {
                 ipFailures[clientIp] = (ipFailures[clientIp] || 0) + 1;
                 return res.status(401).json({ message: 'Invalid username or password' });
             }
-    
+
             const wallet = await db.wallet.findOne({
                 where: {
                     userId: user.id,
                 },
             });
-    
+
             const token = jwt.sign({ id: user.id }, config.secret, {
                 expiresIn: config.jwtExp,
             });
-    
+
             let refreshToken = await RefreshToken.createToken(user);
             let authorities = [];
-    
+
             // Reset Consecutive Login Failures on successful login
             resetConsecutiveFailures(clientIp);
-    
+
             const roles = await user.getRoles();
             for (let i = 0; i < roles.length; i++) {
                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
@@ -151,14 +152,41 @@ module.exports = {
                 prestige_score: wallet.prestige_score,
                 account_balance: wallet.account_balance,
             });
-    
+
             logging.info(`Successfully accessed by user ID: [${user.id}] with email: [${user.email}], IP address: [${clientIp}]`);
         } catch (error) {
             logging.error(`Login failed: ${error.message}, input username: [${req.body.username}], codeLocation: [signin] function in controllers/auth.controllers.js`);
             res.status(500).json({ message: 'Internal Server Error' });
         }
     },
-  };    
+    forgotPassword: async (req, res) => {
+      try {
+        const { username, password, email, address, gender, date_of_birth } = req.body;
+        const user = await db.user.findOne({
+          where: {
+            email: email,
+            username: username
+          },
+        });
+        const dateOfBirth = parseDate(date_of_birth);
+        if (user.email === email && user.username === username && user.address === address && user.gender === gender) {
+          const hashedPassword = await bcrypt.hash(password, 10);
+          // Cập nhật thông tin người dùng trong cơ sở dữ liệu
+          const updatedUser = await db.user.update({ password: hashedPassword }, { where: { id: user.id } });
+          if (updatedUser[0] === 1) {
+            return res.status(200).json({ message: 'New password updated successfully' });
+          } else {
+            return res.status(500).json({ message: 'Failed to update new password for user!' });
+          }
+        } else {
+          return res.status(401).json({ message: 'The information you provided is not accurate!' });
+        }
+      } catch (err) {
+        logging.error(`Error: [${err.message}], IP address: [${requestIp.getClientIp(req)}], User ID: [${req.userId}], email: [${req.userEmail}], codeLocation: [forgotPassword] function in authController.js`);
+        return res.status(500).send({ message: "error!" });
+      }
+    }
+  };
 exports.refreshToken = async (req, res) => {
   const { refreshToken: requestToken } = req.body;
   const userId = req.userId;
@@ -201,33 +229,6 @@ exports.refreshToken = async (req, res) => {
     return res.status(500).send({ message: "error!"});
   }
 };
-exports.forgotPassword = async (req, res) => {
-  try{
-    const { username, password, email, address, gender, date_of_birth } = req.body;   
-      const user = await db.user.findOne({
-        where: {
-            email: email,
-            username: username
-        }, 
-      });
-      const dateOfBirth = parseDate(date_of_birth);
-      if(user.email===email&&user.username===username&&user.address===address&&user.gender===gender&&user.date_of_birth===dateOfBirth)
-    {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        // Cập nhật thông tin người dùng trong cơ sở dữ liệu
-        const updatedUser = await db.user.update({ password: hashedPassword}, { where: { id: user.id } });
-        if (updatedUser[0] === 1) {
-            return res.status(200).json({ message: 'New password updated successfully' });
-        } else {
-            return res.status(500).json({ message: 'Failed to update new password for user!' });
-        }
-    }else return res.status(401).json({ message: 'The information you provided is not accurate!' });
-  }catch (err) {
-  logger.log('error',`Error: [${err.message}], IP address: [${clientIp}], User ID: [${userId}], email: [${userEmail}], codeLocation: [refreshToken] function in controllers/authController.js` );
-  return res.status(500).send({ message: "error!"});
-}
-};
-
 function parseDate(dateString) {
   // Phân tách chuỗi ngày tháng thành mảng
   var parts = dateString.split('/');

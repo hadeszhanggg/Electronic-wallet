@@ -3,6 +3,20 @@ const logging = require('../middleware/logging');
 const db = require("../models");
 const jwt = require("jsonwebtoken");
 const moment = require('moment-timezone');
+
+//Add token
+exports.AddDevice = async (req, res) => {
+    try {
+        const { token } = req.body;
+        const user = await db.user.findByPk(req.userId);
+        await user.update({deviceid: token})
+        logging.info(`Add new device token successfully ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
+        return res.status(201).json("Success!");
+    } catch (error) {
+        logging.error(`Add new device token failed by ${req.userId}, email: ${req.userEmail}, client ip: ${req.clientIp} to wallet: id: ${req.wallet_id}`);
+        res.status(500).json({ message: 'Internal server error.', detail: error.message });
+    }
+};
 // Controller để xử lý sự kiện "welcomeMessage" cho socket.io
 exports.handleWelcomeMessage=async(req,res)=> {
     console.log('Received welcome message:', message);

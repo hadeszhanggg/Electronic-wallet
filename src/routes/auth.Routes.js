@@ -15,9 +15,9 @@ module.exports = function (app) {
   router.post('/signup', authController.signup);
   router.post('/signin', authController.signin);
    //Route forgot password
-   router.put('/forgotPassword', async (req, res) => {
+  router.put('/forgotPassword', async (req, res) => {
     try {
-        authController.forgotPassword(req,res);
+      await authController.forgotPassword(req, res);
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: 'Internal Server Error' });
